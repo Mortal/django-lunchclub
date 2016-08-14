@@ -16,10 +16,16 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from lunchclub.views import Home, Import
+from lunchclub.views import (
+    Home, Import, Login,
+    AccessTokenList, AccessTokenCreate,
+)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', Home.as_view(), name='home'),
     url(r'^import/$', Import.as_view(), name='import'),
+    url(r'^login/$', Login.as_view(), name='login'),
+    url(r'^token/$', AccessTokenList.as_view(), name='accesstoken_list'),
+    url(r'^token/new/$', AccessTokenCreate.as_view(), name='accesstoken_create'),
 ]

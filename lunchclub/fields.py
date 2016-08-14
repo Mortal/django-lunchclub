@@ -9,6 +9,6 @@ class AmountField(models.DecimalField):
         super(AmountField, self).__init__(**kwargs)
 
     def formfield(self, **kwargs):
-        defaults = {'form_class': forms.NumberInput}
+        defaults = dict(widget=forms.NumberInput)
         defaults.update(kwargs)
         return super(AmountField, self).formfield(**defaults)

@@ -1,6 +1,6 @@
 from django import forms
 
-from lunchclub.models import recompute_balances
+from lunchclub.models import recompute_balances, Person
 from lunchclub.parser import import_attendance, import_expenses
 
 
@@ -18,3 +18,7 @@ class ImportForm(forms.Form):
         self.cleaned_data['attendance'][1]()
         self.cleaned_data['expense'][1]()
         recompute_balances()
+
+
+class AccessTokenForm(forms.Form):
+    person = forms.ModelChoiceField(Person.objects)

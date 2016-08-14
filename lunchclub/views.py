@@ -1,11 +1,13 @@
 import datetime
 
 from django.shortcuts import redirect
-from django.views.generic import TemplateView, FormView
+from django.views.generic import TemplateView, FormView, View, ListView
 from django.db.models import Q, Max
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 
-from lunchclub.forms import ImportForm
-from lunchclub.models import Person, Expense, Attendance
+from lunchclub.forms import ImportForm, AccessTokenForm
+from lunchclub.models import Person, Expense, Attendance, AccessToken
 from lunchclub.models import get_average_meal_price, compute_month_balances
 
 
@@ -33,7 +35,7 @@ class Home(TemplateView):
         month_data = []
         for (y, m) in months:
             name = '%04d-%02d' % (y, m)
-            price = meal_prices[y, m]
+            price = meal_prices.setdefault((y, m), 0)
             month_data.append(dict(name=name, price=price))
         data['total_price'] = get_average_meal_price()
         data['months'] = month_data
@@ -69,3 +71,29 @@ class Import(FormView):
     def form_valid(self, form):
         form.save()
         return redirect('home')
+
+
+class Login(View):
+    def get(self, request):
+        token = request.GET.get('token', '')
+        user = authenticate(token=token)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return HttpResponse('Invalid token')
+
+
+class AccessTokenList(ListView):
+    queryset = AccessToken.objects.all()
+    template_name = 'lunchclub/accesstoken_list.html'
+
+
+class AccessTokenCreate(FormView):
+    form_class = AccessTokenForm
+    template_name = 'lunchclub/accesstoken_create.html'
+
+    def form_valid(self, form):
+        token = AccessToken.fresh(form.cleaned_data['person'])
+        token.save()
+        return redirect('accesstoken_list')

@@ -1,12 +1,16 @@
+import random
+import string
 import decimal
 import collections
 
 from django.db import models
 from django.db.models import Sum
+from django.contrib.auth.models import User
 from lunchclub.fields import AmountField
 
 
 class Person(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True)
     username = models.CharField(max_length=30, unique=True)
     balance = AmountField()
     created_time = models.DateTimeField(auto_now_add=True)
@@ -39,6 +43,21 @@ class Expense(models.Model):
     @property
     def month(self):
         return (self.date.year, self.date.month)
+
+
+class AccessToken(models.Model):
+    person = models.ForeignKey(Person)
+    token = models.CharField(max_length=200)
+    created_time = models.DateTimeField(auto_now_add=True)
+    use_count = models.IntegerField(default=0)
+
+    @classmethod
+    def fresh(cls, person):
+        rng = random.SystemRandom()
+        N = cls._meta.get_field('token').max_length
+        chars = string.ascii_letters + string.digits
+        token = ''.join(rng.choice(chars) for _ in range(N))
+        return cls(person=person, token=token)
 
 
 def safediv(x, y):
