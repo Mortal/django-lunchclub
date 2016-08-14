@@ -3,8 +3,108 @@
 <head>
 <meta charset="utf-8" />
 <title>Lunchclub</title>
+<style>
+body {
+	font-size: 13px;
+	line-height: 16px;
+	font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
+	color: #333;
+	margin: 20px 0;
+}
+h1 {
+	margin: 0 0 20px;
+	font-weight: 300;
+	font-size: 20px;
+	color: #666;
+}
+table { border-collapse: collapse; }
+td, th {
+	padding: 8px;
+	border-bottom: 1px solid #eee;
+}
+thead tr {
+	background-color: #f6f6f6;
+}
+thead th {
+	font-size: 11px;
+	text-transform: uppercase;
+	text-align: left;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
+}
+tr:nth-child(even) {
+	background-color: #f9f9f9;
+}
+
+.container {
+    padding: 0 8px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+nav {
+    -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255,.15),0 1px 5px rgba(0,0,0,.075);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15),0 1px 5px rgba(0,0,0,.075);
+    background-image:-webkit-linear-gradient(top,#fff 0,#f8f8f8 100%);
+    background-image:-o-linear-gradient(top,#fff 0,#f8f8f8 100%);
+    background-image:-webkit-gradient(linear,left top,left bottom,from(#fff),to(#f8f8f8));
+    background-image:linear-gradient(to bottom,#fff 0,#f8f8f8 100%);
+    border: 1px solid #E7E7E7;
+    border-width: 1px 0;
+    margin-bottom: 16px;
+}
+
+nav a, nav a:link, nav a:visited {
+    color: #333;
+    text-decoration: none;
+}
+
+nav ul {
+    list-style-type: none;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    min-height: 50px;
+}
+
+nav li {
+    margin-right: 1em;
+    line-height: 50px;
+}
+
+@media (min-width: 768px) {
+    .container {
+        width: 750px;
+        padding: 0 24px;
+    }
+
+}
+
+@media (min-width: 992px) {
+    .container {
+        width: 970px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container {
+        width: 1170px;
+    }
+}
+
+.title-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+</style>
+{% block head %}{% endblock %}
 </head>
 <body>
+    <nav><ul class="container"><li>Lunchclub</li></ul></nav>
+<div class="container">
 {% block content %}{% endblock %}
+</div>
 </body>
 </html>

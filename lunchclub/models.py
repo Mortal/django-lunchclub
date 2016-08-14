@@ -2,6 +2,7 @@ import decimal
 import collections
 
 from django.db import models
+from django.db.models import Sum
 from lunchclub.fields import AmountField
 
 
@@ -54,6 +55,21 @@ def compute_meal_prices(expense_qs, attendance_qs):
             for month, (expenses, attendances) in months.items()}
 
 
+def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
+    if meal_prices is None:
+        meal_prices = compute_meal_prices(expense_qs, attendance_qs)
+    # balances[p][m] == b means person p has balance b in month m
+    # Note that we mutate p.balance, so we must have only one instance
+    # of each Person.
+    balances = collections.defaultdict(
+        lambda: collections.defaultdict(decimal.Decimal))
+    for a in attendance_qs:
+        balances[a.person][a.month] -= meal_prices[a.month]
+    for e in expense_qs:
+        balances[e.person][a.month] += e.amount
+    return meal_prices, balances
+
+
 def compute_all_meal_prices():
     return compute_meal_prices(Expense.objects.all(), Attendance.objects.all())
 
@@ -61,12 +77,16 @@ def compute_all_meal_prices():
 def recompute_balances():
     expense_qs = Expense.objects.all()
     attendance_qs = Attendance.objects.all()
-    meal_prices = compute_meal_prices(expense_qs, attendance_qs)
-    balances = collections.defaultdict(decimal.Decimal)
-    for a in attendance_qs:
-        balances[a.person] -= meal_prices[a.month]
-    for e in expense_qs:
-        balances[e.person] += e.amount
+    meal_prices, balances = compute_month_balances(expense_qs,
+                                                   attendance_qs)
     for p, a in balances.items():
-        p.balance = a
+        p.balance = sum(a.values())
         p.save()
+
+
+def get_average_meal_price():
+    expense_qs = Expense.objects.all()
+    attendance_qs = Attendance.objects.all()
+    expense_sum = expense_qs.aggregate(s=Sum('amount'))['s']
+    attendance_count = attendance_qs.count()
+    return expense_sum / attendance_count if attendance_count else 0

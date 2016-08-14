@@ -1,9 +1,37 @@
 {% extends "lunchclub/base.html" %}
+{% block head %}
+<style>
+.balance td { text-align: right; }
+</style>
+{% endblock %}
 {% block content %}
 <h1>Lunchclub</h1>
-<ul>
-{% for person in persons %}
-<li>{{ person }}: {{ person.balance }}</li>
+<table class="balance">
+<thead>
+<tr>
+<th>Name</th>
+<th>Total</th>
+{% for month in months %}
+<th>{{ month.name }}</th>
 {% endfor %}
-</ul>
+</tr>
+<tr>
+<th>Price</th>
+<td>{{ total_price|floatformat:2 }}</td>
+{% for month in months %}
+<td>{{ month.price|floatformat:2 }}</td>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for person in persons %}
+<th>{{ person.username }}</th>
+<td>{{ person.balance|floatformat:2 }}</td>
+{% for month in person.months %}
+<td>{{ month.balance|floatformat:2 }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
 {% endblock %}
