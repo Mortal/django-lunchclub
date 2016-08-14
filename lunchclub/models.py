@@ -6,15 +6,21 @@ from lunchclub.fields import AmountField
 
 
 class Person(models.Model):
-    username = models.CharField(max_length=30)
+    username = models.CharField(max_length=30, unique=True)
     balance = AmountField()
     created_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.username
+
+    class Meta:
+        ordering = ['username']
 
 
 class Attendance(models.Model):
     date = models.DateField()
     person = models.ForeignKey(Person)
-    created_by = models.ForeignKey(Person)
+    created_by = models.ForeignKey(Person, related_name='+')
     created_time = models.DateTimeField(auto_now_add=True)
 
     @property
@@ -25,7 +31,7 @@ class Attendance(models.Model):
 class Expense(models.Model):
     date = models.DateField()
     person = models.ForeignKey(Person)
-    created_by = models.ForeignKey(Person)
+    created_by = models.ForeignKey(Person, related_name='+')
     created_time = models.DateTimeField(auto_now_add=True)
     amount = AmountField()
 
@@ -34,13 +40,17 @@ class Expense(models.Model):
         return (self.date.year, self.date.month)
 
 
+def safediv(x, y):
+    return float('inf') if y == 0 else x / y
+
+
 def compute_meal_prices(expense_qs, attendance_qs):
     months = collections.defaultdict(lambda: ([], []))
     for o in expense_qs:
         months[o.month][0].append(o)
     for o in attendance_qs:
         months[o.month][1].append(o)
-    return {month: sum(e.amount for e in expenses) / len(attendances)
+    return {month: safediv(sum(e.amount for e in expenses), len(attendances))
             for month, (expenses, attendances) in months.items()}
 
 

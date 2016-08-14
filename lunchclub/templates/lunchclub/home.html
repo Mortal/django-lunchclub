@@ -1,0 +1,9 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Lunchclub</h1>
+<ul>
+{% for person in persons %}
+<li>{{ person }}: {{ person.balance }}</li>
+{% endfor %}
+</ul>
+{% endblock %}
