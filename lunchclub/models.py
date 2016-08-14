@@ -1,3 +1,4 @@
+import decimal
 import collections
 
 from django.db import models
@@ -45,3 +46,17 @@ def compute_meal_prices(expense_qs, attendance_qs):
 
 def compute_all_meal_prices():
     return compute_meal_prices(Expense.objects.all(), Attendance.objects.all())
+
+
+def recompute_balances():
+    expense_qs = Expense.objects.all()
+    attendance_qs = Attendance.objects.all()
+    meal_prices = compute_meal_prices(expense_qs, attendance_qs)
+    balances = collections.defaultdict(decimal.Decimal)
+    for a in attendance_qs:
+        balances[a.person] -= meal_prices[a.month]
+    for e in expense_qs:
+        balances[e.person] += e.amount
+    for p, a in balances.items():
+        p.balance = a
+        p.save()
