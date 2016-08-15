@@ -1,3 +1,4 @@
+import logging
 import datetime
 
 from django.shortcuts import redirect
@@ -9,6 +10,9 @@ from django.http import HttpResponse
 from lunchclub.forms import ImportForm, AccessTokenForm
 from lunchclub.models import Person, Expense, Attendance, AccessToken
 from lunchclub.models import get_average_meal_price, compute_month_balances
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_months():
