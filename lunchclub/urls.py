@@ -17,7 +17,7 @@ from django.conf.urls import url
 from django.contrib import admin
 
 from lunchclub.views import (
-    Home, Import, Login,
+    Home, Import, Login, Logout,
     AccessTokenList, AccessTokenCreate,
 )
 
@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^$', Home.as_view(), name='home'),
     url(r'^import/$', Import.as_view(), name='import'),
     url(r'^login/$', Login.as_view(), name='login'),
+    url(r'^logout/$', Logout.as_view(), name='logout'),
     url(r'^token/$', AccessTokenList.as_view(), name='accesstoken_list'),
     url(r'^token/new/$', AccessTokenCreate.as_view(), name='accesstoken_create'),
 ]

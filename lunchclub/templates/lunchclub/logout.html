@@ -1,0 +1,7 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Lunchclub logout</h1>
+<form method="post">{% csrf_token %}
+    <input type="submit" value="Log out" />
+</form>
+{% endblock %}

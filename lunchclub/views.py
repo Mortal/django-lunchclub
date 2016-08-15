@@ -70,6 +70,15 @@ class Import(FormView):
         return redirect('home')
 
 
+class Logout(TemplateView):
+    template_name = 'lunchclub/logout.html'
+
+    def post(self, request):
+        logger.info("Logout %s", request.user, token.pk)
+        logout(request)
+        return redirect('home')
+
+
 class Login(TemplateView):
     template_name = 'lunchclub/login.html'
 
