@@ -1,0 +1,12 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Lunchclub login</h1>
+{% if error %}
+{{ error }}
+{% else %}
+<p>Bookmark this page for easy login in the future.</p>
+<form method="post">{% csrf_token %}
+    <input type="submit" value="Login as {{ user }}" />
+</form>
+{% endif %}
+{% endblock %}

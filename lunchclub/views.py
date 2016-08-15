@@ -70,10 +70,33 @@ class Import(FormView):
         return redirect('home')
 
 
+class Login(TemplateView):
+    template_name = 'lunchclub/login.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        token = request.GET.get('token')
+        if not token:
+            return self.render_to_response(dict(error='No token specified'))
         user = authenticate(token=token)
-            qs = AccessToken.objects.filter(token=token)
-            qs.update(use_count=F('use_count') + 1)
+        if not user:
+            return self.render_to_response(dict(error='Invalid token specified'))
+        if request.user == user:
             return redirect('home')
+        self.kwargs['user'] = kwargs['user'] = user
+        self.kwargs['token'] = kwargs['token'] = token
+        return super(Login, self).dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        data = super(Login, self).get_context_data(**kwargs)
+        data['user'] = self.kwargs['user']
+        return data
+
+    def post(self, request, user, token):
+        logger.info("Login %s with token %s", user, token[20:])
+        qs = AccessToken.objects.filter(token=token)
+        qs.update(use_count=F('use_count') + 1)
+        login(request, user)
+        return redirect('home')
 
 
 class AccessTokenList(ListView):
