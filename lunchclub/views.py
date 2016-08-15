@@ -44,18 +44,11 @@ class Home(TemplateView):
         person_qs = Person.objects.all()
         person_qs = person_qs.annotate(last_active=Max('expense__date'))
         person_qs = person_qs.filter(last_active__gte=earliest_date)
-        person_qs = person_qs.prefetch_related('attendance_set', 'expense_set')
         person_qs = person_qs.order_by('balance')
         for person in person_qs:
             person_months = []
             for (y, m) in months:
-                attendance_count = sum(1 for a in person.attendance_set.all()
-                                       if a.month == (y, m))
-                expense_sum = sum(e.amount for e in person.expense_set.all()
-                                  if e.month == (y, m))
-                month_balance = float(meal_prices[y, m] * attendance_count)
-                month_balance -= float(expense_sum)
-                person_months.append(dict(balance=month_balance))
+                person_months.append(dict(balance=balances[person][y, m]))
             person_data.append(dict(
                 username=person.username, balance=person.balance,
                 months=person_months))
