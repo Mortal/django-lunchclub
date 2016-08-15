@@ -33,6 +33,9 @@ class Migration(migrations.Migration):
                 ('date', models.DateField()),
                 ('created_time', models.DateTimeField(auto_now_add=True)),
             ],
+            options={
+                'ordering': ['date', 'person'],
+            },
         ),
         migrations.CreateModel(
             name='Expense',
@@ -42,6 +45,9 @@ class Migration(migrations.Migration):
                 ('created_time', models.DateTimeField(auto_now_add=True)),
                 ('amount', lunchclub.fields.AmountField(decimal_places=2, max_digits=19)),
             ],
+            options={
+                'ordering': ['date', 'person'],
+            },
         ),
         migrations.CreateModel(
             name='Person',

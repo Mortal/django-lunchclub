@@ -32,6 +32,9 @@ class Attendance(models.Model):
     def month(self):
         return (self.date.year, self.date.month)
 
+    class Meta:
+        ordering = ['date', 'person']
+
 
 class Expense(models.Model):
     date = models.DateField()
@@ -43,6 +46,9 @@ class Expense(models.Model):
     @property
     def month(self):
         return (self.date.year, self.date.month)
+
+    class Meta:
+        ordering = ['date', 'person']
 
 
 class AccessToken(models.Model):
