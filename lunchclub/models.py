@@ -91,7 +91,7 @@ def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
     for a in attendance_qs:
         balances[a.person][a.month] -= meal_prices[a.month]
     for e in expense_qs:
-        balances[e.person][a.month] += e.amount
+        balances[e.person][e.month] += e.amount
     return meal_prices, balances
 
 
