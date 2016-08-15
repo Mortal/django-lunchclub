@@ -11,8 +11,10 @@ class TokenBackend(object):
             return None
         person = token.person
         if person.user is None:
-            person.user = User(username=person.username)
-            person.user.save()
+            u = User(username=person.username)
+            u.save()
+            person.user = u
+            person.save()
         qs = AccessToken.objects.filter(pk=token.pk)
         qs.update(use_count=F('use_count') + 1)
         return person.user
