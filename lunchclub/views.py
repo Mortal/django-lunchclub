@@ -2,7 +2,7 @@ import datetime
 
 from django.shortcuts import redirect
 from django.views.generic import TemplateView, FormView, View, ListView
-from django.db.models import Q, Max
+from django.db.models import Q, Max, F
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 
@@ -66,15 +66,10 @@ class Import(FormView):
         return redirect('home')
 
 
-class Login(View):
-    def get(self, request):
-        token = request.GET.get('token', '')
         user = authenticate(token=token)
-        if user is not None:
-            login(request, user)
+            qs = AccessToken.objects.filter(token=token)
+            qs.update(use_count=F('use_count') + 1)
             return redirect('home')
-        else:
-            return HttpResponse('Invalid token')
 
 
 class AccessTokenList(ListView):

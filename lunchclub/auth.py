@@ -15,8 +15,6 @@ class TokenBackend(object):
             u.save()
             person.user = u
             person.save()
-        qs = AccessToken.objects.filter(pk=token.pk)
-        qs.update(use_count=F('use_count') + 1)
         return person.user
 
     def get_user(self, user_id):
