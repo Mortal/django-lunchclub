@@ -132,3 +132,5 @@ SITE_PREFIX = 'https://apps.cs.au.dk/lunchclub'
 DEFAULT_FROM_EMAIL = 'lunchclub@apps.cs.au.dk'
 
 SEND_EMAIL_VIA_MAILTO = True
+
+RUNNING_IN_HEROKU = False
