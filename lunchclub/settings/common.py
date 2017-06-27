@@ -128,7 +128,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-SITE_PREFIX = 'https://apps.cs.au.dk/lunchclub'
+SITE_PREFIX = 'https://apps.cs.au.dk'
 DEFAULT_FROM_EMAIL = 'lunchclub@apps.cs.au.dk'
 
 SEND_EMAIL_VIA_MAILTO = True
