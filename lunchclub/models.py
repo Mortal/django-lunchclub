@@ -68,6 +68,7 @@ class Expense(models.Model):
             raise TypeError(type(t).__name__)
         result = cls()
         result.source_tuple = t
+        result.amount = decimal.Decimal(t.amount)
         return result
 
     def resolve(self, get_date, username_map):
@@ -107,12 +108,15 @@ def safediv(x, y):
 
 
 def compute_meal_prices(expense_qs, attendance_qs):
-    months = collections.defaultdict(lambda: ([], []))
+    # Count attendances using a set in order to remove duplicate
+    # (date,person)-pairs.
+    months = collections.defaultdict(lambda: ([], set()))
     for o in expense_qs:
         months[o.month][0].append(o)
     for o in attendance_qs:
-        months[o.month][1].append(o)
-    return {month: safediv(sum(e.amount for e in expenses), len(attendances))
+        months[o.month][1].add((o.date, o.person))
+    return {month: safediv(sum(e.amount for e in expenses),
+                           decimal.Decimal(len(attendances)))
             for month, (expenses, attendances) in months.items()}
 
 
@@ -124,8 +128,9 @@ def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
     # of each Person.
     balances = collections.defaultdict(
         lambda: collections.defaultdict(decimal.Decimal))
-    for a in attendance_qs:
-        balances[a.person][a.month] -= meal_prices[a.month]
+    attendances = set((a.person, a.month, a.date) for a in attendance_qs)
+    for person, month, date in attendances:
+        balances[person][month] -= meal_prices[month]
     for e in expense_qs:
         balances[e.person][e.month] += e.amount
     return meal_prices, balances
@@ -140,6 +145,9 @@ def recompute_balances():
     attendance_qs = Attendance.objects.all()
     meal_prices, balances = compute_month_balances(expense_qs,
                                                    attendance_qs)
+    # If a Person has no attendance/expenses, they aren't in "balances".
+    # Set their balance to 0 in this case.
+    Person.objects.all().update(balance=0)
     for p, a in balances.items():
         p.balance = sum(a.values())
         p.save()

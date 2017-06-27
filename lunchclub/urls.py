@@ -17,14 +17,14 @@ from django.conf.urls import url
 from django.contrib import admin
 
 from lunchclub.views import (
-    Home, Import, Login, Logout,
+    Home, DatabaseBulkEdit, Login, Logout,
     AccessTokenList, AccessTokenCreate,
 )
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', Home.as_view(), name='home'),
-    url(r'^import/$', Import.as_view(), name='import'),
+    url(r'^edit/$', DatabaseBulkEdit.as_view(), name='edit'),
     url(r'^login/$', Login.as_view(), name='login'),
     url(r'^logout/$', Logout.as_view(), name='logout'),
     url(r'^token/$', AccessTokenList.as_view(), name='accesstoken_list'),

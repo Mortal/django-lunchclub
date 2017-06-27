@@ -40,13 +40,25 @@ class DateMixin:
     def date(self):
         return datetime.date(*self.ymd)
 
+    @property
+    def day_invalid(self):
+        try:
+            self.date
+            return False
+        except ValueError:
+            return True
+
 
 class Attend(namedtuple('Attend', 'year month day creator uname'), DateMixin):
-    pass
+    def replace(self, day):
+        return type(self)(year=self.year, month=self.month, day=day,
+                          creator=self.creator, uname=self.uname)
 
 
 class Expense(namedtuple('Expense', 'year month day uname amount'), DateMixin):
-    pass
+    def replace(self, day):
+        return type(self)(year=self.year, month=self.month, day=day,
+                          uname=self.uname, amount=self.amount)
 
 
 def iterparse_attenddb(s):
@@ -82,18 +94,30 @@ def parse_attenddb(s):
     '''
     result = collections.OrderedDict()
     for a in iterparse_attenddb(s):
-        if a in result:
-            raise ValueError("Duplicate line: %r" % (a,))
+        # Ignore any duplicates since they were silently discarded
+        # in the old system.
+        # if a in result:
+        #     raise ValueError("Duplicate line: %r" % (a,))
         result[a] = models.Attendance.from_tuple(a)
     return result
+
+
+def iter_unparse_attenddb(attendance):
+    for a in attendance:
+        yield ('%4d %2d %2d %s %s' %
+               (a.year, a.month, a.day, a.creator, a.uname))
+
+
+def unparse_attenddb(attendance):
+    return '\n'.join(iter_unparse_attenddb(attendance))
 
 
 def get_attenddb_from_model():
     qs = models.Attendance.objects.all().select_related()
     result = collections.OrderedDict()
     for attend in qs:
-        a = Attend(a.date.year, a.date.month, a.date.day,
-                   a.created_by.username, a.person.username)
+        a = Attend(attend.date.year, attend.date.month, attend.date.day,
+                   attend.created_by.username, attend.person.username)
         result[a] = attend
     return result
 
@@ -137,103 +161,181 @@ def parse_expensedb(s):
     return result
 
 
+def iter_unparse_expensedb(expenses):
+    for e in expenses:
+        yield ('%04d %02d %02d %.2f %s ' %
+               (e.year, e.month, e.day, e.amount, e.uname))
+
+
+def unparse_expensedb(expenses):
+    return '\n'.join(iter_unparse_expensedb(expenses))
+
+
 def get_expensedb_from_model():
     result = collections.OrderedDict()
     qs = models.Expense.objects.all().select_related()
     for expense in qs:
-        e = Expense(e.date.year, e.date.month, e.date.day,
-                    e.person.username, e.amount)
+        e = Expense(expense.date.year, expense.date.month, expense.date.day,
+                    expense.person.username, expense.amount)
         result[e] = expense
     return result
 
 
 def get_or_create_users(usernames):
-    username_map = {username: models.Person(username=username, balance=0)
-                    for username in usernames}
+    '''
+    Return a dict mapping usernames to Person objects
+    and a save() function to save new Persons.
+    '''
+    username_map = {p.username: p
+                    for p in models.Person.objects.all()}
+    for u in usernames:
+        username_map.setdefault(u, models.Person(username=u, balance=0))
 
     def save():
-        qs = models.Person.objects.filter(username__in=usernames)
-        for u in qs:
-            username_map.pop(u.username).pk = u.pk
-        new_users = list(username_map.values())
-        if username_map:
+        # Between the call to get_or_create_users() and the call to save(),
+        # another save() function might have created Person objects.
+        # We must avoid creating duplicate Person objects in that case.
+        for p in models.Person.objects.all():
+            # See if username_map contained a placeholder with this username.
+            previous = username_map.get(p.username)
+            if previous is not None and previous.pk is None:
+                # Update old Person object with new pk
+                # to avoid creating a duplicate.
+                previous.pk = p.pk
+
+        new_persons = []
+        for p in username_map.values():
+            if p.pk is None:
+                new_persons.append(p)
+
+        if new_persons:
             logger.debug(
-                "Create %s new users: %s",
-                len(new_users), ', '.join(u.username for u in new_users))
-            for u in new_users:
-                u.save()
+                "Create %s new Person objects: %s",
+                len(new_persons), ', '.join(p.username for p in new_persons))
+            for p in new_persons:
+                p.save()
 
     return username_map, save
 
 
 def date_cleaner(objects):
+    '''
+    Given a collection of namedtuples with "uname", "ym" and "day" fields,
+    and "date" and "ymd" properties,
+    return a function mapping a namedtuple to a valid date.
+
+    If the "ym"-"day" fields don't correspond to a valid date,
+    a free spare date for the user in the month is returned instead.
+
+    The function ensures that no user has two distinct "ymd"-values map to
+    the same datetime.date object. This is useful for attendance computation.
+    '''
     days = {}
     for o in objects:
         days.setdefault((o.uname, o.ym), set()).add(o.day)
 
+    # Maps invalid (uname, ymd) to a datetime.date object.
+    dates = {}
+
     def get_date(o):
+        if not o.day_invalid:
+            return o.date
+
+        # Try returning a cached replacement date.
         try:
-            d = o.date
-        except ValueError:
-            # day out of range for month
-            day = next(n for n in range(1, 31)
-                       if n not in days[o.uname, o.ym])
-            days[o.uname, o.ym].add(day)
-            logger.debug("%s %s-%s-%s is invalid; use %s instead",
-                         o.uname, o.year, o.month, o.day, day)
-            d = datetime.date(o.year, o.month, day)
+            return dates[o.uname, o.ymd]
+        except KeyError:
+            pass
+
+        # datetime.date() raised ValueError due to an invalid day in the
+        # month. Pick another spare day in the month.
+        day = next(n for n in range(1, 31)
+                   if n not in days[o.uname, o.ym])
+        days[o.uname, o.ym].add(day)
+        logger.debug("%s %s-%s-%s is invalid; use %s instead",
+                     o.uname, o.year, o.month, o.day, day)
+        d = datetime.date(o.year, o.month, day)
+        # Cache replacement date.
+        dates[o.uname, o.ymd] = d
         return d
 
     return get_date
 
 
-def import_attendance(s):
-    input_attendance = frozenset(parse_attenddb(s))
-    existing_attendance = frozenset(get_attenddb_from_model())
-    get_date = date_cleaner(input_attendance | existing_attendance)
-    new_attendance = input_attendance - existing_attendance
-    usernames = frozenset(u for a in new_attendance
-                          for u in (a.creator, a.uname))
+def match_invalid_days(old, new):
+    only_old = old.keys() - new.keys()
+    only_new = new.keys() - old.keys()
+
+    old_map = {}
+    for o in only_old:
+        old_map.setdefault((o.uname, o.ym), []).append(o)
+    new_keys = set(new.keys())
+    replacements = []
+    for key in only_new:
+        if not key.day_invalid:
+            continue
+        olds = old_map.get((key.uname, key.ym), [])
+        try:
+            matching = next(a for a in olds if key.replace(day=a.day) == a)
+        except StopIteration:
+            continue
+        olds.remove(matching)
+        replacements.append((key, matching.day))
+    for key, day in replacements:
+        new_key = key.replace(day=day)
+        if new_key in new:
+            raise AssertionError()
+        o = new.pop(key)
+        new[new_key] = type(o).from_tuple(new_key)
+
+    return new.keys() - old.keys(), old.keys() - new.keys()
+
+
+def dbdiff(old, new, has_creator):
+    for o in old.values():
+        if o.pk is None:
+            raise ValueError("Old item has no PK!")
+    for o in new.values():
+        if o.pk is not None:
+            raise ValueError("New item has a PK!")
+    remove = old.keys() - new.keys()
+    create = new.keys() - old.keys()
+
+    if any(o.day_invalid for o in create):
+        create, remove = match_invalid_days(old, new)
+
+    get_date = date_cleaner(old.keys() | new.keys())
+    usernames = frozenset(a.uname for a in create)
+    if has_creator:
+        usernames |= frozenset(a.creator for a in create)
     username_map, person_save = get_or_create_users(usernames)
-    attendances = []
-    for a in new_attendance:
-        attendances.append(models.Attendance(
-            date=get_date(a), person=username_map[a.uname],
-            created_by=username_map[a.creator]))
+    for a in create:
+        new[a].resolve(get_date, username_map)
+        new[a].clean()
 
     def save():
         person_save()
-        for a in attendances:
-            a.person = a.person  # Update person_id
-            a.created_by = a.created_by  # Update created_by_id
-        if attendances:
-            logger.debug("Create %s new attendances", len(attendances))
-            models.Attendance.objects.bulk_create(attendances)
 
-    return attendances, save
+        if remove:
+            type_name = type(next(iter(remove))).__name__
+            logger.debug("Delete %s %s", (len(remove), type_name))
+        for a in remove:
+            old[a].delete()
+
+        if create:
+            type_name = type(next(iter(create))).__name__
+            logger.debug("Save %s %s", (len(create), type_name))
+        for a in create:
+            new[a].person = new[a].person  # Update person_id
+            new[a].created_by = new[a].created_by  # Update created_by_id
+            new[a].save()
+
+    return create, remove, save
 
 
-def import_expenses(s):
-    input_expenses = frozenset(parse_expensedb(s))
-    existing_expenses = frozenset(get_expensedb_from_model())
-    get_date = date_cleaner(input_expenses | existing_expenses)
-    new_expenses = input_expenses - existing_expenses
-    usernames = frozenset(e.uname for e in new_expenses)
-    username_map, person_save = get_or_create_users(usernames)
+def diff_attendance(old, new):
+    return dbdiff(old, new, has_creator=True)
 
-    expenses = []
-    for e in new_expenses:
-        expenses.append(models.Expense(
-            date=get_date(e), person=username_map[e.uname],
-            created_by=username_map[e.uname], amount=e.amount))
 
-    def save():
-        person_save()
-        for e in expenses:
-            e.person = e.person  # Update person_id
-            e.created_by = e.created_by  # Update created_by_id
-        if expenses:
-            logger.debug("Create %s new expenses", len(expenses))
-            models.Expense.objects.bulk_create(expenses)
-
-    return expenses, save
+def diff_expense(old, new):
+    return dbdiff(old, new, has_creator=False)

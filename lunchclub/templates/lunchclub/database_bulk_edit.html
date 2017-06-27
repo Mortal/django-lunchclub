@@ -1,0 +1,20 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Lunchclub</h1>
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <input name="preview" type="submit" value="Preview changes" />
+    <input type="submit" value="Import" />
+</form>
+
+{% if preview_invalid %}
+<p>Cannot preview changes due to form errors.</p>
+{% elif preview %}
+<ul>
+    {% for o in preview %}
+    <li>{{ o }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

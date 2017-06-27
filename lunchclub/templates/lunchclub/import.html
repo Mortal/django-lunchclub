@@ -1,8 +1,0 @@
-{% extends "lunchclub/base.html" %}
-{% block content %}
-<h1>Lunchclub</h1>
-<form method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Import" />
-</form>
-{% endblock %}
