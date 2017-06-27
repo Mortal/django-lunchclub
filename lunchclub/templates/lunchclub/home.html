@@ -28,6 +28,15 @@
 <p>Welcome to the lunchclub! Contact the lunchclub admin to get a login.</p>
 {% endif %}
 
+{% if user.is_superuser %}
+<p>
+Admin pages (only for Django superusers):
+<a href="{% url 'edit' %}">Edit database</a>
+&bull;
+<a href="{% url 'accesstoken_list' %}">Manage access tokens</a>
+</p>
+{% endif %}
+
 <table class="balance">
 <thead>
 <tr>
