@@ -28,6 +28,20 @@ class Attendance(models.Model):
     created_by = models.ForeignKey(Person, related_name='+')
     created_time = models.DateTimeField(auto_now_add=True)
 
+    @classmethod
+    def from_tuple(cls, t):
+        result = cls()
+        result.source_tuple = t
+        return result
+
+    def resolve(self, get_date, username_map):
+        if self.date is None:
+            self.date = get_date(self.source_tuple)
+        if getattr(self, 'person', None) is None:
+            self.person = username_map[self.source_tuple.uname]
+        if getattr(self, 'created_by', None) is None:
+            self.created_by = username_map[self.source_tuple.creator]
+
     @property
     def month(self):
         return (self.date.year, self.date.month)
@@ -42,6 +56,20 @@ class Expense(models.Model):
     created_by = models.ForeignKey(Person, related_name='+')
     created_time = models.DateTimeField(auto_now_add=True)
     amount = AmountField()
+
+    @classmethod
+    def from_tuple(cls, t):
+        result = cls()
+        result.source_tuple = t
+        return result
+
+    def resolve(self, get_date, username_map):
+        if self.date is None:
+            self.date = get_date(self.source_tuple)
+        if getattr(self, 'person', None) is None:
+            self.person = username_map[self.source_tuple.uname]
+        if getattr(self, 'created_by', None) is None:
+            self.created_by = username_map[self.source_tuple.uname]
 
     @property
     def month(self):

@@ -1,3 +1,4 @@
+import collections
 import datetime
 import logging
 
@@ -48,7 +49,13 @@ class Expense(namedtuple('Expense', 'year month day uname amount'), DateMixin):
     pass
 
 
-def parse_attenddb(s):
+def iterparse_attenddb(s):
+    '''
+    >>> s = '2017 6 27 foo bar'
+    >>> attend, = iterparse_attenddb(s)
+    >>> print(attend)
+    Attend(year=2017, month=6, day=27, creator='foo', uname='bar')
+    '''
     for line in s.splitlines():
         if not line.strip():
             continue
@@ -57,14 +64,47 @@ def parse_attenddb(s):
                      creator=creator, uname=uname)
 
 
+def parse_attenddb(s):
+    '''
+    >>> s = '2017 6 27 foo bar'
+    >>> attenddb = parse_attenddb(s)
+    >>> attend, = attenddb.values()
+    >>> from lunchclub.models import Person
+    >>> username_map = {u: Person(username=u) for u in 'foo bar'.split()}
+    >>> get_date = date_cleaner(attenddb.keys())
+    >>> attend.resolve(get_date, username_map)
+    >>> attend.date
+    datetime.date(2017, 6, 27)
+    >>> print(attend.created_by)
+    foo
+    >>> print(attend.person)
+    bar
+    '''
+    result = collections.OrderedDict()
+    for a in iterparse_attenddb(s):
+        if a in result:
+            raise ValueError("Duplicate line: %r" % (a,))
+        result[a] = models.Attendance.from_tuple(a)
+    return result
+
+
 def get_attenddb_from_model():
     qs = models.Attendance.objects.all().select_related()
-    return (Attend(a.date.year, a.date.month, a.date.day,
+    result = collections.OrderedDict()
+    for attend in qs:
+        a = Attend(a.date.year, a.date.month, a.date.day,
                    a.created_by.username, a.person.username)
-            for a in qs)
+        result[a] = attend
+    return result
 
 
-def parse_expensedb(s):
+def iterparse_expensedb(s):
+    '''
+    >>> s = '2017 6 27 6.24 bar'
+    >>> expense, = iterparse_expensedb(s)
+    >>> print(expense)
+    Expense(year=2017, month=6, day=27, uname='bar', amount=Decimal('6.24'))
+    '''
     for line in s.splitlines():
         if not line.strip():
             continue
@@ -73,11 +113,38 @@ def parse_expensedb(s):
                       amount=Decimal(amount), uname=uname)
 
 
+def parse_expensedb(s):
+    '''
+    >>> s = '2017 6 27 6.24 bar'
+    >>> expensedb = parse_expensedb(s)
+    >>> expense, = expensedb.values()
+    >>> from lunchclub.models import Person
+    >>> username_map = {'bar': Person(username='bar')}
+    >>> get_date = date_cleaner(expensedb.keys())
+    >>> expense.resolve(get_date, username_map)
+    >>> expense.date
+    datetime.date(2017, 6, 27)
+    >>> print(expense.created_by)
+    bar
+    >>> print(expense.person)
+    bar
+    '''
+    result = collections.OrderedDict()
+    for e in iterparse_expensedb(s):
+        if e in result:
+            raise ValueError("Duplicate line: %r" % (e,))
+        result[e] = models.Expense.from_tuple(e)
+    return result
+
+
 def get_expensedb_from_model():
+    result = collections.OrderedDict()
     qs = models.Expense.objects.all().select_related()
-    return (Expense(e.date.year, e.date.month, e.date.day,
-                    e.created_by.username, e.amount)
-            for e in qs)
+    for expense in qs:
+        e = Expense(e.date.year, e.date.month, e.date.day,
+                    e.person.username, e.amount)
+        result[e] = expense
+    return result
 
 
 def get_or_create_users(usernames):
