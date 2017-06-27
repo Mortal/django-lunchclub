@@ -58,10 +58,14 @@ class DatabaseBulkEditForm(forms.Form):
 
     def clean(self):
         if 'initial' in self.cleaned_data:
-            apks = self.cleaned_data['initial'].get('attendance_pks')
-            epks = self.cleaned_data['initial'].get('expense_pks')
+            apks = sorted(
+                self.cleaned_data['initial'].get('attendance_pks', []))
+            epks = sorted(
+                self.cleaned_data['initial'].get('expense_pks', []))
             init = json.loads(self.fields['initial'].initial)
-            if apks != init['attendance_pks'] or epks != init['expense_pks']:
+            init_apks = sorted(init['attendance_pks'])
+            init_epks = sorted(init['expense_pks'])
+            if apks != init_apks or epks != init_epks:
                 raise forms.ValidationError(
                     'Your form is expired as the database ' +
                     'has changed in the meantime.')
