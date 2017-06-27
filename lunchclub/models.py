@@ -30,6 +30,9 @@ class Attendance(models.Model):
 
     @classmethod
     def from_tuple(cls, t):
+        # Ensure that t has both a uname and a creator.
+        if not hasattr(t, 'uname') or not hasattr(t, 'creator'):
+            raise TypeError(type(t).__name__)
         result = cls()
         result.source_tuple = t
         return result
@@ -37,6 +40,7 @@ class Attendance(models.Model):
     def resolve(self, get_date, username_map):
         if self.date is None:
             self.date = get_date(self.source_tuple)
+        # Use getattr() since self.person would raise AttributeError when None.
         if getattr(self, 'person', None) is None:
             self.person = username_map[self.source_tuple.uname]
         if getattr(self, 'created_by', None) is None:
@@ -59,6 +63,9 @@ class Expense(models.Model):
 
     @classmethod
     def from_tuple(cls, t):
+        # Ensure that t has a uname but no creator.
+        if not hasattr(t, 'uname') or hasattr(t, 'creator'):
+            raise TypeError(type(t).__name__)
         result = cls()
         result.source_tuple = t
         return result
@@ -66,6 +73,7 @@ class Expense(models.Model):
     def resolve(self, get_date, username_map):
         if self.date is None:
             self.date = get_date(self.source_tuple)
+        # Use getattr() since self.person would raise AttributeError when None.
         if getattr(self, 'person', None) is None:
             self.person = username_map[self.source_tuple.uname]
         if getattr(self, 'created_by', None) is None:
