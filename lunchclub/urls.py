@@ -17,16 +17,22 @@ from django.conf.urls import url
 from django.contrib import admin
 
 from lunchclub.views import (
-    Home, DatabaseBulkEdit, Login, Logout,
-    AccessTokenList, AccessTokenCreate,
+    Home, DatabaseBulkEdit, Login, Logout, AccessTokenList,
+    ExpenseCreate, AttendanceToday, AttendanceCreate,
+    AttendanceExport, ExpenseExport,
 )
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', Home.as_view(), name='home'),
     url(r'^edit/$', DatabaseBulkEdit.as_view(), name='edit'),
+    url(r'^export/attenddb\.txt$', AttendanceExport.as_view(), name='attendance_export'),
+    url(r'^export/expensedb\.txt$', ExpenseExport.as_view(), name='expense_export'),
+    url(r'^export/expencedb\.txt$', ExpenseExport.as_view(), name='expense_export_sic'),
     url(r'^login/$', Login.as_view(), name='login'),
     url(r'^logout/$', Logout.as_view(), name='logout'),
     url(r'^token/$', AccessTokenList.as_view(), name='accesstoken_list'),
-    url(r'^token/new/$', AccessTokenCreate.as_view(), name='accesstoken_create'),
+    url(r'^expense/$', ExpenseCreate.as_view(), name='expense_create'),
+    url(r'^attendance/today/$', AttendanceToday.as_view(), name='attendance_today'),
+    url(r'^attendance/$', AttendanceCreate.as_view(), name='attendance_create'),
 ]

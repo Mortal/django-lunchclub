@@ -1,0 +1,49 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Lunchclub access tokens</h1>
+
+{% if mailto_links %}
+<p>Changes saved, but since the web server cannot send emails,
+you must send them yourself:</p>
+<ul>
+    {% for l in mailto_links %}
+    <li>{{ l }}</li>
+    {% endfor %}
+</ul>
+{% elif success %}
+<p>Changes saved!</p>
+{% endif %}
+
+{{ form.errors }}
+
+<form method="post">{% csrf_token %}
+
+<table>
+<thead>
+<tr>
+    <th>Person</th>
+    <th>Login URL</th>
+    <th>Email</th>
+    <th>Revoke login</th>
+    <th>Generate new login</th>
+    <th>Send login email</th>
+</tr>
+</thead>
+<tbody>
+{% for person, login_url, email, revoke, generate, send in form.rows %}
+<tr>
+    <th>{{ person }}</th>
+    <td><input value="{{ login_url }}" onfocus="this.select()" /></td>
+    <td>{{ email }}</td>
+    <td>{{ revoke }}</td>
+    <td>{{ generate }}</td>
+    <td>{{ send }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<input type="submit" value="Save changes" />
+</form>
+
+{% endblock %}

@@ -9,13 +9,7 @@ class TokenBackend(object):
             token = AccessToken.objects.get(token=token)
         except AccessToken.DoesNotExist:
             return None
-        person = token.person
-        if person.user is None:
-            u = User(username=person.username)
-            u.save()
-            person.user = u
-            person.save()
-        return person.user
+        return token.person.get_or_create_user()
 
     def get_user(self, user_id):
         try:

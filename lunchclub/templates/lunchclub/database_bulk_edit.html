@@ -1,10 +1,19 @@
 {% extends "lunchclub/base.html" %}
 {% block content %}
 <h1>Lunchclub</h1>
+
+<p>Download
+<a href="{% url 'attendance_export' %}">attenddb.txt</a>
+or
+<a href="{% url 'expense_export' %}">expensedb.txt</a>
+in the Official Lunchclub Interchange Format (OLIF).</p>
+
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
+    {% if user.is_superuser %}
     <input name="preview" type="submit" value="Preview changes" />
     <input type="submit" value="Import" />
+    {% endif %}
 </form>
 
 {% if preview_invalid %}

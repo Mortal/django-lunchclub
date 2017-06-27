@@ -5,8 +5,29 @@
 </style>
 {% endblock %}
 {% block content %}
+
 <h1>Lunchclub</h1>
-<form method="get">{{ search_form.as_p }}<input type="submit" value="Show balance" /></form>
+
+{% if user %}
+<p>Welcome to the lunchclub, {{ user }}!</p>
+
+<form method="post" action="{% url 'expense_create' %}">{% csrf_token %}
+    <input type="hidden" name="myself" value="yes" />
+    <input name="expense" type="number" placeholder="Enter expense" min="0.01" max="400" step="any" />
+    <input type="submit" value="Enter expense" />
+</form>
+
+<p><a href="{% url 'attendance_today' %}">Enter today's attendance</a>
+&bull;
+<a href="{% url 'attendance_create' %}">Enter attendance for past month</a></p>
+
+<p><a href="{% url 'expense_create' %}">Enter someone else's expense</a>
+&bull;
+<a href="{% url 'edit' %}">View database</a></p>
+{% else %}
+<p>Welcome to the lunchclub! Contact the lunchclub admin to get a login.</p>
+{% endif %}
+
 <table class="balance">
 <thead>
 <tr>
@@ -35,4 +56,5 @@
 {% endfor %}
 </tbody>
 </table>
+<form method="get">{{ search_form.as_p }}<input type="submit" value="Show balance" /></form>
 {% endblock %}

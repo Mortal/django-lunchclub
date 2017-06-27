@@ -1,11 +1,15 @@
 import random
 import string
 import decimal
+import datetime
 import collections
 
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Q, Max
+from django.utils import timezone
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from lunchclub.fields import AmountField
 
 
@@ -20,6 +24,44 @@ class Person(models.Model):
 
     class Meta:
         ordering = ['username']
+
+    def get_or_create_user(self):
+        if self.user is not None:
+            return self.user
+        user = User(username=self.username)
+        user.save()
+        self.user = user  # Set self.user_id
+        self.save()
+        return self.user
+
+    @classmethod
+    def annotate_active(cls, expense=True, attendance=True):
+        qs = Person.objects.all()
+        if expense:
+            qs = qs.annotate(last_expense=Max('expense__date'))
+        if attendance:
+            qs = qs.annotate(last_attendance=Max('attendance__date'))
+        return qs
+
+    @classmethod
+    def last_attendance_order(cls):
+        qs = cls.annotate_active(expense=False, attendance=True)
+        return qs.order_by('-last_attendance')
+
+    @classmethod
+    def filter_active(cls, inactive_months=6, today=None):
+        if today is None:
+            today = timezone.now().date()
+        ym = 12*today.year + today.month
+        earliest_ym = ym - inactive_months + 1
+        earliest_y, earliest_m = divmod(earliest_ym, 12)
+        earliest_date = datetime.date(earliest_y, earliest_m, 1)
+
+        qs = cls.annotate_active()
+        qs = qs.filter(
+            Q(last_expense__gte=earliest_date) |
+            Q(last_attendance__gte=earliest_date))
+        return qs
 
 
 class Attendance(models.Model):
@@ -93,6 +135,23 @@ class AccessToken(models.Model):
     token = models.CharField(max_length=200)
     created_time = models.DateTimeField(auto_now_add=True)
     use_count = models.IntegerField(default=0)
+
+    def login_url(self):
+        if not self.token:
+            return ''
+        return (settings.SITE_PREFIX + reverse('login') +
+                '?token=' + self.token)
+
+    @classmethod
+    def all_as_dict(self):
+        token_qs = AccessToken.objects.all()
+        tokens = {}
+        for t in token_qs:
+            ex = tokens.setdefault(t.person, t)
+            if ex.created_time < t.created_time:
+                # Retain token with latest created_time
+                tokens[t.person] = t
+        return tokens
 
     @classmethod
     def fresh(cls, person):

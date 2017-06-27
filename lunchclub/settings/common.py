@@ -126,3 +126,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+SITE_PREFIX = 'https://apps.cs.au.dk/lunchclub'
+DEFAULT_FROM_EMAIL = 'lunchclub@apps.cs.au.dk'
+
+SEND_EMAIL_VIA_MAILTO = True

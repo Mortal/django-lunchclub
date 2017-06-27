@@ -1,0 +1,37 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Enter attendance</h1>
+<form method="get">
+    <p><label>Choose month: {{ month_form.month }}</label> <input type="submit" value="Go" /></p>
+</form>
+<h2>{{ month }}</h2>
+<form method="post">{% csrf_token %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                {% for dt in form.dates %}
+                <th>{{ dt.day }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for person, row in form.rows %}
+            <tr>
+                <td>{{ person }}</td>
+                {% for already_checked, field in row %}
+                <td>
+                    {% if already_checked %}
+                    <input type=checkbox checked disabled />
+                    {% else %}
+                    {{ field }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <input type="submit" value="Save" />
+</form>
+{% endblock %}

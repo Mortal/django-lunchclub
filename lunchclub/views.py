@@ -1,19 +1,59 @@
 import logging
 import datetime
+import functools
 
+from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.shortcuts import redirect
-from django.views.generic import TemplateView, FormView, View, ListView
-from django.db.models import Q, Max, F
-from django.contrib.auth import authenticate, login
+from django.views.generic import TemplateView, FormView, View
 from django.http import HttpResponse
+from django.views.defaults import permission_denied
+from django.db.models import Q, F
+from django.contrib.auth import authenticate, login, logout
 
-from lunchclub.forms import DatabaseBulkEditForm, AccessTokenForm, SearchForm
+from lunchclub.forms import (
+    DatabaseBulkEditForm, AccessTokenListForm, SearchForm, ExpenseCreateForm,
+    AttendanceTodayForm, AttendanceCreateForm, MonthForm,
+)
 from lunchclub.models import Person, Expense, Attendance, AccessToken
 from lunchclub.models import get_average_meal_price, compute_month_balances
-from lunchclub.parser import get_attenddb_from_model, get_expensedb_from_model
+from lunchclub.parser import (
+    get_attenddb_from_model, get_expensedb_from_model,
+    unparse_attenddb, unparse_expensedb,
+)
 
 
 logger = logging.getLogger(__name__)
+
+
+def dispatch_superuser_required(function):
+    @functools.wraps(function)
+    def dispatch(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return permission_denied(request, exception=None)
+        return function(request, *args, **kwargs)
+
+    return dispatch
+
+
+superuser_required = method_decorator(
+    dispatch_superuser_required, name='dispatch')
+
+
+def dispatch_person_required(function):
+    @functools.wraps(function)
+    def dispatch(request, *args, **kwargs):
+        try:
+            request.person = Person.objects.get(user=request.user)
+        except Person.DoesNotExist:
+            return permission_denied(request, exception=None)
+        return function(request, *args, **kwargs)
+
+    return dispatch
+
+
+person_required = method_decorator(
+    dispatch_person_required, name='dispatch')
 
 
 def get_months(months):
@@ -55,10 +95,10 @@ class Home(TemplateView):
         data['months'] = month_data
 
         person_data = []
-        person_qs = Person.objects.all()
-        person_qs = person_qs.annotate(last_active=Max('expense__date'))
-        if not search_data['show_all']:
-            person_qs = person_qs.filter(last_active__gte=earliest_date)
+        if search_data['show_all']:
+            person_qs = Person.objects.all()
+        else:
+            person_qs = Person.filter_active()
         person_qs = person_qs.order_by('balance')
         for person in person_qs:
             person_months = []
@@ -72,6 +112,20 @@ class Home(TemplateView):
         return data
 
 
+class AttendanceExport(View):
+    def get(self, request):
+        return HttpResponse(
+            unparse_attenddb(get_attenddb_from_model()),
+            content_type='text/plain')
+
+
+class ExpenseExport(View):
+    def get(self, request):
+        return HttpResponse(
+            unparse_expensedb(get_expensedb_from_model()),
+            content_type='text/plain')
+
+
 class DatabaseBulkEdit(FormView):
     form_class = DatabaseBulkEditForm
     template_name = 'lunchclub/database_bulk_edit.html'
@@ -83,6 +137,8 @@ class DatabaseBulkEdit(FormView):
         return form_kwargs
 
     def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return permission_denied(request, exception=None)
         if request.POST.get('preview'):
             return self.render_to_response(
                 self.get_context_data(form=self.get_form(),
@@ -108,7 +164,7 @@ class Logout(TemplateView):
     template_name = 'lunchclub/logout.html'
 
     def post(self, request):
-        logger.info("Logout %s", request.user, token.pk)
+        logger.info("Logout %s", request.user)
         logout(request)
         return redirect('home')
 
@@ -122,9 +178,12 @@ class Login(TemplateView):
             return self.render_to_response(dict(error='No token specified'))
         user = authenticate(token=token)
         if not user:
-            return self.render_to_response(dict(error='Invalid token specified'))
+            return self.render_to_response(
+                dict(error='Invalid token specified'))
         if request.user == user:
+            # Already logged in!
             return redirect('home')
+        # Not logged in, so present "bookmark this page"-form.
         self.kwargs['user'] = kwargs['user'] = user
         self.kwargs['token'] = kwargs['token'] = token
         return super(Login, self).dispatch(request, *args, **kwargs)
@@ -135,23 +194,124 @@ class Login(TemplateView):
         return data
 
     def post(self, request, user, token):
-        logger.info("Login %s with token %s", user, token[20:])
+        logger.info("Login %s with token %s", user, token[:20])
         qs = AccessToken.objects.filter(token=token)
         qs.update(use_count=F('use_count') + 1)
         login(request, user)
         return redirect('home')
 
 
-class AccessTokenList(ListView):
-    queryset = AccessToken.objects.all()
-    template_name = 'lunchclub/accesstoken_list.html'
+@superuser_required
+class AccessTokenList(FormView):
+    form_class = AccessTokenListForm
+    template_name = 'lunchclub/accesstokenlist.html'
 
-
-class AccessTokenCreate(FormView):
-    form_class = AccessTokenForm
-    template_name = 'lunchclub/accesstoken_create.html'
+    def get_form_kwargs(self, **kwargs):
+        form_kwargs = super().get_form_kwargs(**kwargs)
+        form_kwargs['queryset'] = Person.objects.all()
+        return form_kwargs
 
     def form_valid(self, form):
-        token = AccessToken.fresh(form.cleaned_data['person'])
-        token.save()
-        return redirect('accesstoken_list')
+        mailto_links = form.save()
+        if mailto_links is not None:
+            return self.render_to_response(self.get_context_data(
+                form=form, mailto_links=mailto_links))
+        return self.render_to_response(self.get_context_data(
+            form=form, success=True))
+
+
+@person_required
+class ExpenseCreate(FormView):
+    form_class = ExpenseCreateForm
+    template_name = 'lunchclub/expensecreate.html'
+
+    def get_form_kwargs(self, **kwargs):
+        form_kwargs = super().get_form_kwargs(**kwargs)
+        form_kwargs['person'] = self.request.person
+        form_kwargs['date'] = timezone.now().date()
+        form_kwargs['queryset'] = Person.objects.all()
+        return form_kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('home')
+
+
+@person_required
+class AttendanceToday(FormView):
+    form_class = AttendanceTodayForm
+    template_name = 'lunchclub/attendancetoday.html'
+
+    def get_form_kwargs(self, **kwargs):
+        form_kwargs = super().get_form_kwargs(**kwargs)
+        form_kwargs['person'] = self.request.person
+        form_kwargs['date'] = timezone.now().date()
+        form_kwargs['queryset'] = Person.last_attendance_order()
+        return form_kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('attendance_today')
+
+
+@person_required
+class AttendanceCreate(FormView):
+    form_class = AttendanceCreateForm
+    template_name = 'lunchclub/attendancecreate.html'
+
+    def get_month_range(self):
+        now = timezone.now()
+        earliest = (now.year - 2, now.month)
+        current_month = (now.year, now.month)
+        return earliest, current_month
+
+    def iter_months(self):
+        earliest, current_month = self.get_month_range()
+        y, m = current_month
+        while (y, m) >= earliest:
+            yield (y, m)
+            if m == 1:
+                y -= 1
+                m = 12
+            else:
+                m -= 1
+
+    def get_month(self):
+        form = self.get_month_form()
+        return (form.cleaned_data['ym']
+                if form.is_valid() else form.initial_month)
+
+    def get_month_form(self):
+        current_date = timezone.now().day
+        choices = list(self.iter_months())
+        initial_month = choices[0] if current_date >= 10 else choices[1]
+        return MonthForm(choices=choices, initial_month=initial_month,
+                         data=self.request.GET or None)
+
+    def get_dates(self):
+        dates = []
+        y, m = self.get_month()
+        for d in range(1, 32):
+            try:
+                dt = datetime.date(y, m, d)
+            except ValueError:
+                break
+            dates.append(dt)
+        return dates
+
+    def get_form_kwargs(self, **kwargs):
+        form_kwargs = super().get_form_kwargs(**kwargs)
+        form_kwargs['person'] = self.request.person
+        form_kwargs['dates'] = self.get_dates()
+        form_kwargs['persons'] = Person.last_attendance_order()
+        return form_kwargs
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('home')
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        month_form = context_data['month_form'] = self.get_month_form()
+        context_data['month'] = month_form.ym_name(month_form.initial_month)
+        return context_data

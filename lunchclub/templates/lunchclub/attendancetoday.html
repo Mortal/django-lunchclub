@@ -1,0 +1,21 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+<h1>Enter today's attendance</h1>
+<form method="post">{% csrf_token %}
+<ul>
+{% for person, already_checked, field in form.rows %}
+    <li>
+        <label>
+        {% if already_checked %}
+        <input type=checkbox checked disabled />
+        {% else %}
+        {{ field }}
+        {% endif %}
+        {{ person }}
+        </label>
+    </li>
+{% endfor %}
+</ul>
+<input type="submit" value="Save" />
+</form>
+{% endblock %}
