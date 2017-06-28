@@ -6,6 +6,11 @@
 </form>
 <h2>{{ month }}</h2>
 <form method="post">{% csrf_token %}
+    <p>Enter attendance, one person per line, format <tt>name d1 d2 ... dN</tt>.</p>
+    {{ form.lines.errors }}
+    <p>{{ form.lines }}</p>
+    <p><input type="submit" value="Save" /></p>
+    <p>Or use the carpal tunnel-inducing table of checkboxes below:</p>
     <table>
         <thead>
             <tr>
@@ -32,6 +37,6 @@
             {% endfor %}
         </tbody>
     </table>
-    <input type="submit" value="Save" />
+    <p><input type="submit" value="Save" /></p>
 </form>
 {% endblock %}

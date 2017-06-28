@@ -317,19 +317,21 @@ class MonthForm(forms.Form):
 
 
 class AttendanceCreateForm(forms.Form):
+    lines = forms.CharField(widget=forms.Textarea)
+
     def __init__(self, **kwargs):
         self.person = kwargs.pop('person')
-        persons = list(kwargs.pop('persons'))
+        self.persons = list(kwargs.pop('persons'))
         self.dates = kwargs.pop('dates')
         super().__init__(**kwargs)
 
         existing_qs = Attendance.objects.filter(date__in=self.dates,
-                                                person__in=persons)
+                                                person__in=self.persons)
         existing = {(a.person, a.date): a for a in existing_qs}
 
         self.rows = []
         self.checkboxes = []
-        for person in persons:
+        for person in self.persons:
             row = []
             for date in self.dates:
                 if (person, date) in existing:
@@ -341,8 +343,40 @@ class AttendanceCreateForm(forms.Form):
                 row.append((False, self[k]))
             self.rows.append((person, row))
 
+    def clean_lines(self):
+        s = self.cleaned_data['lines']
+        result = []
+        for line in s.splitlines():
+            if not line.strip():
+                continue
+            name, *days = line.split()
+            try:
+                days = [int(d) for d in days]
+            except ValueError as exn:
+                raise forms.ValidationError(
+                    'Invalid integer: %r' % (exn.args[0],))
+            dmin = min(days)
+            dmax = max(days)
+            if dmin < 1:
+                raise forms.ValidationError('Invalid day: %r' % (dmin,))
+            if dmax > len(self.dates):
+                raise forms.ValidationError('Invalid day: %r' % (dmax,))
+            try:
+                person = next(p for p in self.persons
+                              if p.username == name)
+            except StopIteration:
+                raise forms.ValidationError(
+                    'Unknown person: %r' % (name,))
+            result.extend((person, self.dates[d-1]) for d in days)
+        return result
+
+    def get_checkbox_selected(self):
+        return ((p, d) for p, d, k in self.checkboxes if self.cleaned_data[k])
+
     def get_selected(self):
-        return [(p, d) for p, d, k in self.checkboxes if self.cleaned_data[k]]
+        return sorted(set(self.get_checkbox_selected()) |
+                      set(self.cleaned_data['lines']),
+                      key=lambda x: (x[0].username, x[1]))
 
     def save(self):
         data = self.cleaned_data
