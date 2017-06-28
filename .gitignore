@@ -1,5 +1,6 @@
 *.swp
 __pycache__
-/db.sqlite3
+/*.sqlite3
 /venv
 /lunchclub/settings/__init__.py
+/*.log
