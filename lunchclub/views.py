@@ -21,9 +21,10 @@ from lunchclub.parser import (
     get_attenddb_from_model, get_expensedb_from_model,
     unparse_attenddb, unparse_expensedb,
 )
+import lunchclub.mail
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('lunchclub')
 
 
 def dispatch_superuser_required(function):
@@ -156,6 +157,8 @@ class DatabaseBulkEdit(FormView):
         return context_data
 
     def form_valid(self, form):
+        for line in form.iter_created_removed():
+            logger.info("%s: %s", self.request.user.username, line)
         form.save()
         return redirect('home')
 
@@ -212,12 +215,43 @@ class AccessTokenList(FormView):
         return form_kwargs
 
     def form_valid(self, form):
-        mailto_links = form.save()
-        if mailto_links is not None:
-            return self.render_to_response(self.get_context_data(
-                form=form, mailto_links=mailto_links))
+        set_email, revoke_tokens, save_tokens, messages, save = form.actions()
+
+        for user, email in set_email:
+            logger.info("%s: Set email address of %s to %s",
+                        self.request.user.username,
+                        user.username, email)
+        for token in save_tokens:
+            logger.info("%s: Create %s token %s",
+                        self.request.user.username, token.person.username,
+                        token.token[:20])
+        for token in revoke_tokens:
+            logger.info("%s: Revoke %s token %s with %s use(s)",
+                        self.request.user.username, token.person.username,
+                        token.token[:20], token.use_count)
+
+        save()
+
+        fresh_kwargs = self.get_form_kwargs()
+        fresh_kwargs.pop('data', None)
+        fresh_kwargs.pop('files', None)
+        fresh_form = self.form_class(**fresh_kwargs)
+        assert not fresh_form.is_bound, fresh_kwargs
+
+        if messages:
+            if settings.SEND_EMAIL_VIA_MAILTO:
+                mailto_links = lunchclub.mail.make_mailto_links(messages)
+                return self.render_to_response(self.get_context_data(
+                    form=fresh_form, mailto_links=mailto_links))
+            else:
+                recipients = [message.to[0] for message in messages]
+                logger.info("%s: Send login emails to %s",
+                            self.request.user.username,
+                            recipients)
+                lunchclub.mail.send_messages(messages)
+
         return self.render_to_response(self.get_context_data(
-            form=form, success=True))
+            form=fresh_form, success=True))
 
 
 @person_required
@@ -233,6 +267,9 @@ class ExpenseCreate(FormView):
         return form_kwargs
 
     def form_valid(self, form):
+        logger.info("%s: Create expense %s for %s",
+                    self.request.user.username,
+                    form.cleaned_data['person'], form.cleaned_data['expense'])
         form.save()
         return redirect('home')
 
@@ -250,6 +287,9 @@ class AttendanceToday(FormView):
         return form_kwargs
 
     def form_valid(self, form):
+        logger.info("%s: Today's attendance is %s",
+                    self.request.user.username,
+                    ', '.join(p.username for p in form.get_selected()))
         form.save()
         return redirect('attendance_today')
 
@@ -307,6 +347,12 @@ class AttendanceCreate(FormView):
         return form_kwargs
 
     def form_valid(self, form):
+        by_person = {}
+        for p, d in form.get_selected():
+            by_person.setdefault(p.username, []).append(d.day)
+        logger.info("%s: Attendance in %s: %r",
+                    self.request.user.username,
+                    self.get_month(), by_person)
         form.save()
         return redirect('home')
 

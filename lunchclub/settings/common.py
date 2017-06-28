@@ -128,6 +128,33 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': ('[%(asctime)s %(name)s %(levelname)s] ' +
+                       '%(message)s'),
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'django.log',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'lunchclub': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+
 SITE_PREFIX = 'https://apps.cs.au.dk'
 DEFAULT_FROM_EMAIL = 'lunchclub@apps.cs.au.dk'
 

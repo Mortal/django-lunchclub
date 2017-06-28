@@ -2,7 +2,7 @@
 {% block content %}
 <h1>Enter attendance</h1>
 <form method="get">
-    <p><label>Choose month: {{ month_form.month }}</label> <input type="submit" value="Go" /></p>
+    <p><label>Choose month: {{ month_form.ym }}</label> <input type="submit" value="Go" /></p>
 </form>
 <h2>{{ month }}</h2>
 <form method="post">{% csrf_token %}

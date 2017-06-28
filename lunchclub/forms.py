@@ -1,5 +1,7 @@
+import re
 import json
-import logging
+import decimal
+import datetime
 
 from django import forms
 from django.contrib.auth.models import User
@@ -16,12 +18,6 @@ from lunchclub.parser import (
     diff_attendance, diff_expense,
 )
 import lunchclub.mail
-import datetime
-import re
-import decimal
-
-
-logger = logging.getLogger(__name__)
 
 
 class DatabaseBulkEditForm(forms.Form):
@@ -119,7 +115,7 @@ class AccessTokenListForm(forms.Form):
             keys = {}
             entry = {'person': person, 'keys': keys}
 
-            base = 'p%s_' % person.pk
+            base = '%s_' % person.username
 
             user = person.user or User()
             keys['email'] = k = base + 'email'
@@ -151,14 +147,14 @@ class AccessTokenListForm(forms.Form):
                 if data[keys['send']]:
                     # Wanted to send an email
                     self.add_error(keys['send'], 'Email address required')
-            if data[keys['revoke']] and not entry['token']:
+            if data[keys['revoke']] and not entry['token'].token:
                 self.add_error(keys['revoke'], 'No token to revoke!')
             already_has_token = (
                 entry['token'].token and not data[keys['revoke']])
             if data[keys['generate']] and already_has_token:
                 self.add_error(keys['generate'], 'Already has token!')
 
-    def save(self):
+    def actions(self):
         data = self.cleaned_data
         tokens = AccessToken.all_as_dict()
 
@@ -193,22 +189,16 @@ class AccessTokenListForm(forms.Form):
                     link=link,
                 ))
 
-        for user, email in set_email:
-            user.email = email
-            user.save()
-        for token in revoke_tokens:
-            logger.info("Revoke %s token %s with %s use(s)",
-                        user, token[:20], token.use_count)
-            token.delete()
-        for token in save_tokens:
-            token.save()
-        if messages:
-            assert len(messages) == len(recipients)
-            if settings.SEND_EMAIL_VIA_MAILTO:
-                return lunchclub.mail.make_mailto_links(messages)
-            else:
-                logger.info("Send login emails to %s", recipients)
-                lunchclub.mail.send_messages(messages)
+        def save():
+            for user, email in set_email:
+                user.email = email
+                user.save()
+            for token in revoke_tokens:
+                token.delete()
+            for token in save_tokens:
+                token.save()
+
+        return set_email, revoke_tokens, save_tokens, messages, save
 
 
 class ExpenseCreateForm(forms.Form):
@@ -282,14 +272,16 @@ class AttendanceTodayForm(forms.Form):
             self.rows.append((person, False, self[k]))
             self.persons.append((person, k))
 
+    def get_selected(self):
+        return [p for p, k in self.persons if self.cleaned_data[k]]
+
     def save(self):
         data = self.cleaned_data
         objects = [
             Attendance(date=self.date,
                        person=p,
                        created_by=self.person)
-            for p, k in self.persons
-            if data[k]
+            for p in self.get_selected()
         ]
         Attendance.objects.bulk_create(objects)
 
@@ -349,12 +341,14 @@ class AttendanceCreateForm(forms.Form):
                 row.append((False, self[k]))
             self.rows.append((person, row))
 
+    def get_selected(self):
+        return [(p, d) for p, d, k in self.checkboxes if self.cleaned_data[k]]
+
     def save(self):
         data = self.cleaned_data
         objects = [
             Attendance(date=d, person=p,
                        created_by=self.person)
-            for p, d, k in self.checkboxes
-            if data[k]
+            for p, d in self.get_selected()
         ]
         Attendance.objects.bulk_create(objects)

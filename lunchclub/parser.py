@@ -8,7 +8,7 @@ from decimal import Decimal
 from lunchclub import models
 
 
-logger = logging.getLogger('lunchclub.parser')
+logger = logging.getLogger('lunchclub')
 
 
 class YearMonth(namedtuple('YearMonth', 'year month')):
