@@ -1,6 +1,7 @@
 import re
 import hmac
 import base64
+import decimal
 import hashlib
 import logging
 import datetime
@@ -29,7 +30,6 @@ from lunchclub.parser import (
     unparse_attenddb, unparse_expensedb,
 )
 import lunchclub.mail
-import decimal
 
 
 logger = logging.getLogger('lunchclub')
