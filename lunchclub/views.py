@@ -367,7 +367,7 @@ class AttendanceCreate(FormView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         month_form = context_data['month_form'] = self.get_month_form()
-        context_data['month'] = month_form.ym_name(month_form.initial_month)
+        context_data['month'] = month_form.ym_name(self.get_month())
         return context_data
 
 
