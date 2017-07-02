@@ -25,6 +25,13 @@ class Person(models.Model):
     class Meta:
         ordering = ['username']
 
+    @classmethod
+    def get_or_create(cls, username):
+        try:
+            return Person.objects.get(username=username)
+        except Person.DoesNotExist:
+            return Person.objects.create(username=username, balance=0)
+
     def get_or_create_user(self):
         if self.user is not None:
             return self.user
@@ -135,6 +142,17 @@ class AccessToken(models.Model):
     token = models.CharField(max_length=200)
     created_time = models.DateTimeField(auto_now_add=True)
     use_count = models.IntegerField(default=0)
+
+    @classmethod
+    def get_or_create(cls, person):
+        qs = AccessToken.objects.filter(person=person)
+        qs = qs.order_by('-created_time')
+        try:
+            return qs[0]
+        except IndexError:
+            r = cls.fresh(person)
+            r.save()
+            return r
 
     def login_url(self):
         if not self.token:

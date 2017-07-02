@@ -1,5 +1,6 @@
 import re
 import hmac
+import json
 import base64
 import decimal
 import hashlib
@@ -393,12 +394,14 @@ class Submit(View):
             print(payload, input_mac, mac)
             return HttpResponseBadRequest('MAC failed')
 
-        error = save_payload()
-        if error is None:
+        result = save_payload()
+        if isinstance(result, HttpResponse):
+            return result
+        elif result is None:
             # Return the message that lunchclub2015 expects
-            return HttpResponse('Submission OK')
+            return HttpResponse(json.dumps({'success': True}))
         else:
-            return HttpResponseBadRequest(error)
+            return HttpResponseBadRequest(json.dumps({'error': result}))
 
     def parse_payload(self, payload):
         try:
@@ -431,7 +434,7 @@ class Submit(View):
 
             return save
 
-        attendance_pattern = (r'attendance (\d+)\s+(\d+)\s+([a-z0-9]+)\s+' +
+        attendance_pattern = (r'^attendance (\d+)\s+(\d+)\s+([a-z0-9]+)\s+' +
                               r'([a-z0-9]+)((?:\s+\d+)+)$')
         mo = re.match(attendance_pattern, payload)
         if mo:
@@ -459,6 +462,30 @@ class Submit(View):
                                      date=d)
                           for d in sorted(set(dates) - set(existing_dates))]
                 Attendance.objects.bulk_create(create)
+
+            return save
+
+        token_pattern = r'^token (\d+)\s+(\d+)\s+(\d+)\s+([a-z0-9]+)$'
+        mo = re.match(token_pattern, payload)
+        if mo:
+            year, month, day = map(int, mo.group(1, 2, 3))
+            try:
+                ymd = datetime.date(year, month, day)
+            except ValueError:
+                return 'Invalid date'
+            if ymd != datetime.date.today():
+                return 'Wrong date'
+            username = mo.group(4)
+
+            def save():
+                person = Person.get_or_create(username)
+                token = AccessToken.get_or_create(person)
+                url = token.login_url()
+                assert url
+                return HttpResponse(json.dumps({'success': True,
+                                                'return': url}))
+
+            return save
 
 
 submit_view = csrf_exempt(Submit.as_view())

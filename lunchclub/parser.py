@@ -318,13 +318,13 @@ def dbdiff(old, new, has_creator):
 
         if remove:
             type_name = type(next(iter(remove))).__name__
-            logger.debug("Delete %s %s", (len(remove), type_name))
+            logger.debug("Delete %s %s", len(remove), type_name)
         for a in remove:
             old[a].delete()
 
         if create:
             type_name = type(next(iter(create))).__name__
-            logger.debug("Save %s %s", (len(create), type_name))
+            logger.debug("Save %s %s", len(create), type_name)
         for a in create:
             new[a].person = new[a].person  # Update person_id
             new[a].created_by = new[a].created_by  # Update created_by_id
