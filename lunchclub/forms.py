@@ -267,7 +267,7 @@ class AttendanceTodayForm(forms.Form):
             if person in existing:
                 self.rows.append((person, True, ''))
                 continue
-            k = 'p%s' % person.pk
+            k = person.username
             self.fields[k] = forms.BooleanField(required=False)
             self.rows.append((person, False, self[k]))
             self.persons.append((person, k))
@@ -337,7 +337,7 @@ class AttendanceCreateForm(forms.Form):
                 if (person, date) in existing:
                     row.append((True, ''))
                     continue
-                k = 'p%s_%s' % (person.pk, date.strftime('%Y%m%d'))
+                k = '%s_%s' % (person.username, date.strftime('%Y%m%d'))
                 self.fields[k] = forms.BooleanField(required=False)
                 self.checkboxes.append((person, date, k))
                 row.append((False, self[k]))
