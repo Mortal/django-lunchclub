@@ -46,7 +46,7 @@ class Person(models.Model):
     @classmethod
     def last_attendance_order(cls):
         qs = cls.annotate_active(expense=False, attendance=True)
-        return qs.order_by('-last_attendance')
+        return qs.order_by('-last_attendance', 'username')
 
     @classmethod
     def filter_active(cls, inactive_months=6, today=None):
