@@ -171,6 +171,7 @@ CHANNEL_LAYERS = {
 
 
 SITE_PREFIX = 'https://apps.cs.au.dk'
+WEBSOCKET_SITE_PREFIX = 'ws://apps-server.cs.au.dk/lunchclub'
 DEFAULT_FROM_EMAIL = 'lunchclub@apps.cs.au.dk'
 
 SEND_EMAIL_VIA_MAILTO = True

@@ -1,5 +1,5 @@
 <script>
-socket = new WebSocket("ws://" + window.location.host + "/chat/ws/");
+socket = new WebSocket("{{ WEBSOCKET_SITE_PREFIX }}/chat/ws/");
 socket.onmessage = function(e) {
     alert(e.data);
 }
