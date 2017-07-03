@@ -1,9 +1,17 @@
 <script>
-socket = new WebSocket("{{ WEBSOCKET_SITE_PREFIX }}/chat/ws/");
-socket.onmessage = function(e) {
-    alert(e.data);
-}
-socket.onopen = function() {
-    socket.send("hello world");
-}
+//socket = new WebSocket("{{ WEBSOCKET_SITE_PREFIX }}/chat/ws/");
+//socket.onmessage = function(e) {
+//    alert(e.data);
+//}
+//socket.onopen = function() {
+//    socket.send("hello world");
+//}
+
+var sse = new EventSource("stream/");
+
+sse.addEventListener("chat_message", function(e) {
+alert('Chat message: ' + e.data);
+});
 </script>
+<form action="publish/" target="foo"><input name="m"> <input type="submit" value="Say" /></form>
+<iframe name="foo"></iframe>

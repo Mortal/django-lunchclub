@@ -22,7 +22,7 @@ from lunchclub.views import (
     Home, DatabaseBulkEdit, Login, Logout, AccessTokenList,
     ExpenseCreate, AttendanceToday, AttendanceCreate,
     AttendanceExport, ExpenseExport, submit_view,
-    ShoppingList,
+    ShoppingList, chat_publish,
 )
 
 urlpatterns = [
@@ -42,4 +42,5 @@ urlpatterns = [
     url(r'^shoppinglist/$', ShoppingList.as_view(), name='shopping_list'),
     url(r'^chat/$', TemplateView.as_view(template_name='chat.html'),
         kwargs={'WEBSOCKET_SITE_PREFIX': settings.WEBSOCKET_SITE_PREFIX}),
+    url(r'^chat/publish/$', chat_publish),
 ]

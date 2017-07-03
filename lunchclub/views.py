@@ -8,17 +8,24 @@ import logging
 import datetime
 import functools
 
+from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.shortcuts import redirect
 from django.views.generic import TemplateView, FormView, View
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import (
+    HttpResponse, HttpResponseBadRequest, HttpResponseServerError,
+    HttpResponseNotModified,
+)
 from django.views.defaults import permission_denied
 from django.db.models import Q, F
 from django.contrib.auth import authenticate, login, logout
 from django.conf import settings
+
+from channels import Group
+from channels.handler import AsgiRequest
 
 from lunchclub.forms import (
     DatabaseBulkEditForm, AccessTokenListForm, SearchForm, ExpenseCreateForm,
@@ -515,3 +522,16 @@ class ShoppingList(FormView):
             o.created_by = self.request.person
             o.save()
         return redirect('shopping_list')
+
+
+def publish(group_name, event, data):
+    msg = 'event:%s\ndata:%s\n\n' % (event, data)
+    Group(group_name).send({
+        "content": msg.encode(),
+        "more_content": True,
+    })
+
+
+def chat_publish(request):
+    publish('chat_stream', 'chat_message', request.GET.get('m', ''))
+    return HttpResponseNotModified()
