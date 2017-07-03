@@ -165,7 +165,7 @@ CHANNEL_LAYERS = {
     #     "CONFIG": {
     #         "hosts": [("localhost", 6379)],
     #     },
-    #     "ROUTING": "realtime.routing.channel_routing",
+    #     "ROUTING": "lunchclub.routing.channel_routing",
     # },
 }
 
