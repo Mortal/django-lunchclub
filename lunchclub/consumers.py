@@ -1,12 +1,6 @@
-from django.http import HttpResponse
+# from django.http import HttpResponse
 from channels import Group
-from channels.handler import AsgiRequest, AsgiHandler
-
-
-def websocket_receive(message):
-    text = message.content.get('text')
-    if text:
-        message.reply_channel.send({"text": "You said: {}".format(text)})
+# from channels.handler import AsgiRequest, AsgiHandler
 
 
 def chat_stream(message):
