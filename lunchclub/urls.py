@@ -40,7 +40,6 @@ urlpatterns = [
     url(r'^attendance/$', AttendanceCreate.as_view(), name='attendance_create'),
     url(r'^clisubmit/$', submit_view),
     url(r'^shoppinglist/$', ShoppingList.as_view(), name='shopping_list'),
-    url(r'^chat/$', TemplateView.as_view(template_name='chat.html'),
-        kwargs={'WEBSOCKET_SITE_PREFIX': settings.WEBSOCKET_SITE_PREFIX}),
+    url(r'^chat/$', TemplateView.as_view(template_name='chat.html')),
     url(r'^chat/publish/$', chat_publish),
 ]
