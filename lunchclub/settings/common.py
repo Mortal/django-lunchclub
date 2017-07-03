@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'lunchclub',
 ]
 
@@ -152,6 +153,20 @@ LOGGING = {
             'propagate': True,
         },
     },
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "lunchclub.routing.channel_routing",
+    },
+    # "default": {
+    #     "BACKEND": "asgi_redis.RedisChannelLayer",
+    #     "CONFIG": {
+    #         "hosts": [("localhost", 6379)],
+    #     },
+    #     "ROUTING": "realtime.routing.channel_routing",
+    # },
 }
 
 

@@ -1,0 +1,9 @@
+<script>
+socket = new WebSocket("ws://" + window.location.host + "/chat/ws/");
+socket.onmessage = function(e) {
+    alert(e.data);
+}
+socket.onopen = function() {
+    socket.send("hello world");
+}
+</script>

@@ -16,6 +16,7 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
+from django.views.generic import TemplateView
 from lunchclub.views import (
     Home, DatabaseBulkEdit, Login, Logout, AccessTokenList,
     ExpenseCreate, AttendanceToday, AttendanceCreate,
@@ -38,4 +39,5 @@ urlpatterns = [
     url(r'^attendance/$', AttendanceCreate.as_view(), name='attendance_create'),
     url(r'^clisubmit/$', submit_view),
     url(r'^shoppinglist/$', ShoppingList.as_view(), name='shopping_list'),
+    url(r'^chat/$', TemplateView.as_view(template_name='chat.html')),
 ]
