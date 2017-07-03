@@ -20,6 +20,7 @@ from lunchclub.views import (
     Home, DatabaseBulkEdit, Login, Logout, AccessTokenList,
     ExpenseCreate, AttendanceToday, AttendanceCreate,
     AttendanceExport, ExpenseExport, submit_view,
+    ShoppingList,
 )
 
 urlpatterns = [
@@ -36,4 +37,5 @@ urlpatterns = [
     url(r'^attendance/today/$', AttendanceToday.as_view(), name='attendance_today'),
     url(r'^attendance/$', AttendanceCreate.as_view(), name='attendance_create'),
     url(r'^clisubmit/$', submit_view),
+    url(r'^shoppinglist/$', ShoppingList.as_view(), name='shopping_list'),
 ]

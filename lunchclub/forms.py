@@ -9,7 +9,7 @@ from django.conf import settings
 
 from lunchclub.models import (
     recompute_balances, AccessToken, Expense, Attendance,
-    Person,
+    Person, ShoppingListItem,
 )
 from lunchclub.parser import (
     parse_attenddb, parse_expensedb,
@@ -386,3 +386,31 @@ class AttendanceCreateForm(forms.Form):
             for p, d in self.get_selected()
         ]
         Attendance.objects.bulk_create(objects)
+
+
+class ShoppingListForm(forms.Form):
+    name = forms.CharField(required=False)
+    create = forms.BooleanField(required=False)
+
+    def __init__(self, **kwargs):
+        self.queryset = kwargs.pop('queryset')
+        super().__init__(**kwargs)
+
+        self.shopping_list_items = []
+        for o in self.queryset:
+            k = 'i%s_delete' % o.pk
+            self.fields[k] = forms.BooleanField(required=False)
+            self.shopping_list_items.append((o, k))
+
+    def clean(self):
+        data = self.cleaned_data
+        data['created'] = []
+        if data.get('create'):
+            try:
+                data['created'].append(ShoppingListItem(name=data['name']))
+            except KeyError:
+                self.add_error('name', 'This field is required.')
+        data['deleted'] = []
+        for o, k in self.shopping_list_items:
+            if data.get(k):
+                data['deleted'].append(o)

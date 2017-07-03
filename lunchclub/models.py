@@ -236,3 +236,13 @@ def get_average_meal_price():
     expense_sum = expense_qs.aggregate(s=Sum('amount'))['s']
     attendance_count = attendance_qs.count()
     return expense_sum / attendance_count if attendance_count else 0
+
+
+class ShoppingListItem(models.Model):
+    created_by = models.ForeignKey(Person, on_delete=models.SET_NULL,
+                                   blank=True, null=True, related_name='+')
+    created_time = models.DateTimeField(auto_now_add=True)
+    deleted_by = models.ForeignKey(Person, on_delete=models.SET_NULL,
+                                   blank=True, null=True, related_name='+')
+    deleted_time = models.DateTimeField(blank=True, null=True)
+    name = models.CharField(max_length=100)

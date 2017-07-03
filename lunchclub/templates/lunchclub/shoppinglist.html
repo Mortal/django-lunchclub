@@ -1,0 +1,25 @@
+{% extends "lunchclub/base.html" %}
+{% block content %}
+
+<h1>Shopping list</h1>
+
+<form method="post">{% csrf_token %}
+{% if form.errors %}
+<p>Please correct the errors below.</p>
+{% endif %}
+{{ form.name.errors }}
+<p>
+{{ form.name }} <input type="submit" name="create" value="Add" />
+</p>
+<table>
+<tbody>
+{% for item, key in form.shopping_list_items %}
+<tr>
+<td>{{ item.name }} <small>{{ item.created_time|date:"j M Y" }} by {{ item.created_by }}</small></td>
+<td><input type="submit" name="{{ key }}" value="X" /></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</form>
+{% endblock %}

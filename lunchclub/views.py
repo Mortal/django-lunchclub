@@ -22,9 +22,11 @@ from django.conf import settings
 
 from lunchclub.forms import (
     DatabaseBulkEditForm, AccessTokenListForm, SearchForm, ExpenseCreateForm,
-    AttendanceTodayForm, AttendanceCreateForm, MonthForm,
+    AttendanceTodayForm, AttendanceCreateForm, MonthForm, ShoppingListForm,
 )
-from lunchclub.models import Person, Expense, Attendance, AccessToken
+from lunchclub.models import (
+    Person, Expense, Attendance, AccessToken, ShoppingListItem,
+)
 from lunchclub.models import get_average_meal_price, compute_month_balances
 from lunchclub.parser import (
     get_attenddb_from_model, get_expensedb_from_model,
@@ -489,3 +491,27 @@ class Submit(View):
 
 
 submit_view = csrf_exempt(Submit.as_view())
+
+
+@person_required
+class ShoppingList(FormView):
+    queryset = ShoppingListItem.objects.filter(deleted_time__isnull=True)
+    template_name = 'lunchclub/shoppinglist.html'
+    form_class = ShoppingListForm
+
+    def get_form_kwargs(self, **kwargs):
+        form_kwargs = super().get_form_kwargs(**kwargs)
+        form_kwargs['queryset'] = self.queryset.all()
+        return form_kwargs
+
+    def form_valid(self, form):
+        for o in form.cleaned_data['deleted']:
+            logger.info("%s: Delete %r", self.request.person, o.name)
+            o.deleted_by = self.request.person
+            o.deleted_time = timezone.now()
+            o.save()
+        for o in form.cleaned_data['created']:
+            logger.info("%s: Create %r", self.request.person, o.name)
+            o.created_by = self.request.person
+            o.save()
+        return redirect('shopping_list')
