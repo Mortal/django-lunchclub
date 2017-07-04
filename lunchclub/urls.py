@@ -23,6 +23,7 @@ from lunchclub.views import (
     ExpenseCreate, AttendanceToday, AttendanceCreate,
     AttendanceExport, ExpenseExport, submit_view,
     ShoppingList, chat_publish,
+    today_update,
 )
 
 urlpatterns = [
@@ -42,4 +43,5 @@ urlpatterns = [
     url(r'^shoppinglist/$', ShoppingList.as_view(), name='shopping_list'),
     url(r'^chat/$', TemplateView.as_view(template_name='chat.html')),
     url(r'^chat/publish/$', chat_publish),
+    url(r'^today/update/$', today_update),
 ]

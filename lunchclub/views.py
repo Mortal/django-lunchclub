@@ -535,3 +535,98 @@ def publish(group_name, event, data):
 def chat_publish(request):
     publish('chat_stream', 'chat_message', request.GET.get('m', ''))
     return HttpResponseNotModified()
+
+
+def send_status(channel, status):
+    # https://serverfault.com/a/801629
+    headers = [
+        ('Content-Type', 'text/event-stream'),
+        ('Cache-Control', 'no-cache'),
+        ('X-Accel-Buffering', 'no'),
+    ]
+    # https://github.com/flo-dhalluin/ssechannels/blob/master/ssechannels/sse.py
+    reply = {
+        'status': status,
+        'headers': headers,
+        'more_content': True,
+    }
+    channel.send(reply)
+
+
+def send_event(channel, event, data, more_content=True):
+    channel.send({
+        'content':
+        b'event:%s\ndata:%s\n\n' %
+        (str(event).encode(),
+         str(data).encode()),
+        'more_content': more_content})
+
+
+def send_event_json(channel, event, data, more_content=True):
+    channel.send({
+        'content':
+        b'event:%s\ndata:%s\n\n' %
+        (str(event).encode(),
+         json.dumps(data).encode()),
+        'more_content': more_content})
+
+
+class TodayActions:
+    def action(actions, s, f):
+        actions.append(f)
+        f.label = s
+        return f
+
+    actions = []
+    action = functools.partial(
+        lambda f, xs, s: lambda g: f(xs, s, g), action, actions)
+
+    @action('I want lunchclub lunch')
+    def yes(user):
+        pass
+
+    @action('I bring my own lunch')
+    def own(user):
+        pass
+
+    @action('I have other plans')
+    def no(user):
+        pass
+
+    @action('Initiate protocol!')
+    def who(user):
+        send_event_json(Group('today_events'),
+                        'notification',
+                        {'title': 'Lunch?',
+                         'body': '%s asks: Do you want lunch?' % user})
+
+    @action('Tell all someone is getting food')
+    def way(user):
+        send_event_json(Group('today_events'),
+                        'notification',
+                        {'title': 'Lunch soon',
+                         'body': '%s: Someone is getting food' % user})
+
+    @action('Tell all there\'s lunch now')
+    def now(user):
+        send_event_json(Group('today_events'),
+                        'notification',
+                        {'title': 'Food!',
+                         'body': '%s says: There\'s food now!' % user})
+
+
+def today_update(request):
+    if not request.user.is_authenticated():
+        return HttpResponseBadRequest('Not authenticated')
+    if not request.method == 'POST':
+        return HttpResponseBadRequest('Unsupported method')
+    key = request.POST.get('key')
+    if not key:
+        return HttpResponseBadRequest('Missing POST "key"')
+    function = getattr(TodayActions, key, None)
+    try:
+        function.label
+    except AttributeError:
+        return HttpResponseBadRequest('Invalid key')
+    function(request.user)
+    return HttpResponse('OK')
