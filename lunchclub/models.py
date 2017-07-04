@@ -246,3 +246,91 @@ class ShoppingListItem(models.Model):
                                    blank=True, null=True, related_name='+')
     deleted_time = models.DateTimeField(blank=True, null=True)
     name = models.CharField(max_length=100)
+
+
+class Announce(models.Model):
+    WHO = 'who'
+    WHO_LABEL = 'Initiate protocol!'
+    WAY = 'way'
+    WAY_LABEL = 'Tell all someone is getting food'
+    NOW = 'now'
+    NOW_LABEL = 'Tell all there\'s lunch now'
+
+    KIND = [
+        (WHO, WHO_LABEL),
+        (WAY, WAY_LABEL),
+        (NOW, NOW_LABEL),
+    ]
+
+    NOTIFICATION = {
+        WHO: ('Lunch?', '%s asks: Do you want lunch?'),
+        WAY: ('Lunch soon', '%s: Someone is getting food'),
+        NOW: ('Food!', '%s says: There\'s food now!'),
+    }
+
+    created_time = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(Person, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=10, choices=KIND)
+
+    def notification(self):
+        title, body = self.NOTIFICATION[self.kind]
+        return dict(title=title, body=body % str(self.created_by))
+
+    @classmethod
+    def current_notification_for_date(cls, date):
+        qs = cls.objects.filter(created_time__date=date)
+        qs = qs.order_by('-created_time')
+        try:
+            o = qs[0]
+        except IndexError:
+            return None
+        return o.notification()
+
+    @classmethod
+    def create(cls, time, person, kind):
+        if kind not in (k for k, l in cls.KIND):
+            raise ValueError(kind)
+        o = cls.objects.create(created_time=time, created_by=person, kind=kind)
+        # Delay import to avoid import cycle
+        import lunchclub.today
+        lunchclub.today.send_notification(o)
+
+
+class Rsvp(models.Model):
+    YES = 'yes'
+    YES_LABEL = 'I want lunchclub lunch'
+    OWN = 'own'
+    OWN_LABEL = 'I bring my own lunch'
+    NO = 'no'
+    NO_LABEL = 'I have other plans'
+
+    STATUS = [
+        (YES, YES_LABEL),
+        (OWN, OWN_LABEL),
+        (NO, NO_LABEL),
+    ]
+    date = models.DateField()
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS)
+
+    class Meta:
+        unique_together = [('date', 'person')]
+
+    @classmethod
+    def dict_for_date(cls, date):
+        qs = cls.objects.filter(date=date)
+        return {o.person.username: o.status for o in qs}
+
+    @classmethod
+    def set_rsvp(cls, date, person, status):
+        if status not in (k for k, l in cls.STATUS):
+            raise ValueError(status)
+        try:
+            o = cls.objects.get(date=date, person=person)
+        except cls.DoesNotExist:
+            o = cls(date=date, person=person)
+        o.status = status
+        o.save()
+        # Delay import to avoid import cycle
+        import lunchclub.today
+        lunchclub.today.send_current_rsvp()
