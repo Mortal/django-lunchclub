@@ -32,7 +32,9 @@ from lunchclub.forms import (
 from lunchclub.models import (
     Person, Expense, Attendance, AccessToken, ShoppingListItem, Rsvp, Announce,
 )
-from lunchclub.models import get_average_meal_price, compute_month_balances
+from lunchclub.models import (
+    get_average_meal_price, compute_month_balances, recompute_balances,
+)
 from lunchclub.parser import (
     get_attenddb_from_model, get_expensedb_from_model,
     unparse_attenddb, unparse_expensedb,
@@ -287,6 +289,7 @@ class ExpenseCreate(FormView):
                     self.request.user.username,
                     form.cleaned_data['person'], form.cleaned_data['expense'])
         form.save()
+        recompute_balances()
         return redirect('home')
 
 
@@ -307,6 +310,7 @@ class AttendanceToday(FormView):
                     self.request.user.username,
                     ', '.join(p.username for p in form.get_selected()))
         form.save()
+        recompute_balances()
         return redirect('attendance_today')
 
 
@@ -370,6 +374,7 @@ class AttendanceCreate(FormView):
                     self.request.user.username,
                     self.get_month(), by_person)
         form.save()
+        recompute_balances()
         return redirect('home')
 
     def get_context_data(self, **kwargs):
@@ -438,6 +443,7 @@ class Submit(View):
                 Expense.objects.create(
                     date=date, person=person, amount=amount,
                     created_by=person)
+                recompute_balances()
 
             return save
 
@@ -469,6 +475,7 @@ class Submit(View):
                                      date=d)
                           for d in sorted(set(dates) - set(existing_dates))]
                 Attendance.objects.bulk_create(create)
+                recompute_balances()
 
             return save
 
