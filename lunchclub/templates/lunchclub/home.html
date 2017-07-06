@@ -24,11 +24,17 @@ content: "";
     padding: 0;
 }
 .today-rsvps > li {
+margin-top: 1ex;
     font-weight: bold;
 }
 .today-rsvps > li > ul {
     list-style-type: disc;
     font-weight: normal;
+}
+
+.today-rsvps .timestamp {
+font-size: 80%;
+color: #777;
 }
 
 @media screen and (max-width: 480px) {
@@ -129,6 +135,12 @@ function set_today_options(kind, options) {
     }
 }
 
+function epoch_ms_to_hhmm(e) {
+    var d = new Date;
+    d.setTime(e);
+    return ('0' + d.getHours()).substr(-2) + ':' + ('0' + d.getMinutes()).substr(-2);
+}
+
 function set_today_rsvps(rsvps) {
     var container = get_today_options_container('rsvps', 'today-rsvps');
     container.innerHTML = '';
@@ -146,13 +158,18 @@ function set_today_rsvps(rsvps) {
         var persons = by_status[status_key] || [];
         for (var i = 0; i < persons.length; ++i) {
             var l = document.createElement('li');
-            l.appendChild(persons[i].display_name);
+            l.appendChild(document.createTextNode(persons[i].display_name + ' '));
+            var timestamp = epoch_ms_to_hhmm(persons[i].created_time_epoch_ms);
+            var timestamp_el = document.createElement('time');
+            timestamp_el.className = 'timestamp';
+            timestamp_el.textContent = timestamp;
+            l.appendChild(timestamp_el);
             ul.appendChild(l);
         }
         list.appendChild(ul);
         container.appendChild(list);
     }
-    help('yes', 'Lunchclub');
+    help('yes', 'Lunchclub lunch');
     help('own', 'Own lunch');
     help('no', 'Other plans');
 }
