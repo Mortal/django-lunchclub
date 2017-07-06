@@ -316,6 +316,11 @@ class Announce(models.Model):
         lunchclub.today.send_notification(o)
 
 
+def dt_to_epoch_ms(dt: datetime.datetime):
+    epoch = dt.timestamp()
+    return int(epoch * 1e3)
+
+
 class Rsvp(models.Model):
     YES = 'yes'
     YES_LABEL = 'I want lunchclub lunch'
@@ -338,9 +343,13 @@ class Rsvp(models.Model):
         unique_together = [('date', 'person')]
 
     @classmethod
-    def dict_for_date(cls, date):
-        qs = cls.objects.filter(date=date)
-        return {o.person.username: o.status for o in qs}
+    def data_for_date(cls, date):
+        qs = cls.objects.filter(date=date).select_related()
+        return [{'username': o.person.username,
+                 'display_name': o.person.display_name,
+                 'status': o.status,
+                 'created_time_epoch_ms': dt_to_epoch_ms(o.created_time)}
+                for o in qs]
 
     @classmethod
     def set_rsvp(cls, date, person, status):
