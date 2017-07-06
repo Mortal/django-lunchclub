@@ -91,6 +91,10 @@ function set_today_message(q) {
 }
 
 function set_today_announcement(a) {
+    if (a) {
+        var hhmm = epoch_ms_to_hhmm(a.created_time_epoch_ms);
+        window.title = '(' + hhmm + ') ' + a.title + ' - Lunchclub';
+    }
     document.getElementById('today-announcement').textContent = a ? a.body : '';
 }
 
