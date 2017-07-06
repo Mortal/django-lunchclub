@@ -277,8 +277,12 @@ class Announce(models.Model):
         return dict(title=title, body=body % str(self.created_by))
 
     @classmethod
-    def current_notification_for_date(cls, date):
-        qs = cls.objects.filter(created_time__date=date)
+    def current_notification_for_date(cls, today):
+        today_dt = datetime.datetime.combine(today, datetime.time())
+        tomorrow_date = today + datetime.timedelta(1)
+        tomorrow_dt = datetime.datetime.combine(tomorrow_date, datetime.time())
+        qs = cls.objects.filter(created_time__gte=today_dt,
+                                created_time__lt=tomorrow_dt)
         qs = qs.order_by('-created_time')
         try:
             o = qs[0]
