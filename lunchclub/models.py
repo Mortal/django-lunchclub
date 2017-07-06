@@ -1,9 +1,11 @@
+import re
 import random
 import string
 import decimal
 import datetime
 import collections
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum, Q, Max
 from django.utils import timezone
@@ -13,9 +15,16 @@ from django.core.urlresolvers import reverse
 from lunchclub.fields import AmountField
 
 
+def username_validate(v):
+    if not re.match(r'^[a-z]*$', v):
+        raise ValidationError('Username must consist of only a-z')
+
+
 class Person(models.Model):
     user = models.ForeignKey(User, null=True, blank=True)
-    username = models.CharField(max_length=30, unique=True)
+    username = models.CharField(max_length=30, unique=True,
+                                validators=[username_validate])
+    display_name = models.CharField(max_length=100)
     balance = AmountField()
     created_time = models.DateTimeField(auto_now_add=True)
 
@@ -30,7 +39,10 @@ class Person(models.Model):
         try:
             return Person.objects.get(username=username)
         except Person.DoesNotExist:
-            return Person.objects.create(username=username, balance=0)
+            p = Person(username=username, balance=0)
+            p.clean()
+            p.save()
+            return p
 
     def get_or_create_user(self):
         if self.user is not None:
@@ -69,6 +81,10 @@ class Person(models.Model):
             Q(last_expense__gte=earliest_date) |
             Q(last_attendance__gte=earliest_date))
         return qs
+
+    def clean(self):
+        if not self.display_name:
+            self.display_name = self.username
 
 
 class Attendance(models.Model):
