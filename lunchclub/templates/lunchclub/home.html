@@ -68,8 +68,12 @@ var csrftoken = getCookie('csrftoken');
 
 var today_events = new EventSource('today/events/');
 
-function set_today_message(msg) {
-    document.getElementById('today-message').textContent = msg;
+function set_today_message(q) {
+    document.getElementById('today-message').textContent = q.msg;
+}
+
+function set_today_announcement(a) {
+    document.getElementById('today-announcement').textContent = a ? a.body : '';
 }
 
 function get_today_options_container(kind) {
@@ -123,24 +127,14 @@ function set_today_rsvps(rsvps) {
     }
 }
 
-function set_today_notification(notification) {
-    console.log(notification);
-    var container = get_today_options_container('notification');
-    if (notification === null) {
-        container.innerHTML = '';
-    } else {
-        container.innerHTML = notification.body;
-    }
-}
-
 today_events.addEventListener('query', function (e) {
     var q = JSON.parse(e.data);
     console.log(q);
-    set_today_message(q.msg);
+    set_today_message(q);
+    set_today_announcement(q.announcement);
     set_today_options('rsvp_options', q.rsvp_options);
     set_today_options('announce', q.announce);
     set_today_rsvps(q.rsvps);
-    set_today_notification(q.announcement);
     Notification.requestPermission();
 });
 
@@ -148,7 +142,7 @@ today_events.addEventListener('notification', function (e) {
     if (Notification.permission !== 'granted') return;
     var q = JSON.parse(e.data);
     var n = new Notification(q.title, {'body': q.body});
-    set_today_notification(q);
+    set_today_announcement(q);
 });
 
 </script>
@@ -160,7 +154,9 @@ today_events.addEventListener('notification', function (e) {
 <h1>Lunchclub</h1>
 
 {% if user.is_authenticated %}
-<p>Welcome to the lunchclub, {{ user }}! <span id="today-message"></span></p>
+<p>Welcome to the lunchclub, {{ user }}!
+<span id="today-message"></span>
+<span id="today-announcement"></span></p>
 
 <div id="today"></div>
 
