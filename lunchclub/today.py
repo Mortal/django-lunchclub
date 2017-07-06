@@ -24,7 +24,7 @@ def send_current_rsvp(channel=None):
     today = timezone.now().date()
     data = {'msg': msg, 'rsvp_options': rsvp_options, 'announce': announce,
             'announcement': Announce.current_notification_for_date(today),
-            'rsvps': Rsvp.dict_for_date(today)}
+            'rsvps': Rsvp.data_for_date(today)}
 
     send_event_json(channel, 'query', data)
 

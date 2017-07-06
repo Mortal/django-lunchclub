@@ -19,6 +19,18 @@ content: "\A0\2022\A0";
 content: "";
 }
 
+.today-rsvps {
+    list-style-type: none;
+    padding: 0;
+}
+.today-rsvps > li {
+    font-weight: bold;
+}
+.today-rsvps > li > ul {
+    list-style-type: disc;
+    font-weight: normal;
+}
+
 @media screen and (max-width: 480px) {
     input[type=number] {
     height: 40px;
@@ -76,12 +88,12 @@ function set_today_announcement(a) {
     document.getElementById('today-announcement').textContent = a ? a.body : '';
 }
 
-function get_today_options_container(kind) {
+function get_today_options_container(kind, className) {
     var r = document.getElementById('today-' + kind);
     if (r) return r;
     var today_el = document.getElementById('today');
     r = document.createElement('ul');
-    r.className = 'nav-group';
+    r.className = className;
     r.id = 'today-' + kind;
     today_el.appendChild(r);
     return r;
@@ -103,7 +115,7 @@ function set_own_status(kind, key) {
 }
 
 function set_today_options(kind, options) {
-    var container = get_today_options_container(kind);
+    var container = get_today_options_container(kind, 'nav-group');
     container.innerHTML = '';
     for (var i = 0; i < options.length; ++i) {
         var li = document.createElement('li');
@@ -118,13 +130,31 @@ function set_today_options(kind, options) {
 }
 
 function set_today_rsvps(rsvps) {
-    var container = get_today_options_container('rsvps');
+    var container = get_today_options_container('rsvps', 'today-rsvps');
     container.innerHTML = '';
-    for (var k in rsvps) {
-        var li = document.createElement('li');
-        li.textContent = k + ': ' + rsvps[k];
-        container.appendChild(li);
+    var by_status = {};
+    for (var i = 0; i < rsvps.length; ++i) {
+        if (!(rsvps[i].status in by_status))
+            by_status[rsvps[i].status] = [];
+        by_status[rsvps[i].status].push(rsvps[i]);
     }
+
+    function help(status_key, status_name) {
+        var list = document.createElement('li');
+        list.appendChild(document.createTextNode(status_name + ':'));
+        var ul = document.createElement('ul');
+        var persons = by_status[status_key] || [];
+        for (var i = 0; i < persons.length; ++i) {
+            var l = document.createElement('li');
+            l.appendChild(persons[i].display_name);
+            ul.appendChild(l);
+        }
+        list.appendChild(ul);
+        container.appendChild(list);
+    }
+    help('yes', 'Lunchclub');
+    help('own', 'Own lunch');
+    help('no', 'Other plans');
 }
 
 today_events.addEventListener('query', function (e) {
