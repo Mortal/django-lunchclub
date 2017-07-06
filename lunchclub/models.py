@@ -330,6 +330,7 @@ class Rsvp(models.Model):
         (NO, NO_LABEL),
     ]
     date = models.DateField()
+    created_time = models.DateTimeField(auto_now_add=True)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS)
 
