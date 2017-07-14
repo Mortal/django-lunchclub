@@ -317,7 +317,7 @@ class MonthForm(forms.Form):
 
 
 class AttendanceCreateForm(forms.Form):
-    lines = forms.CharField(widget=forms.Textarea)
+    lines = forms.CharField(widget=forms.Textarea, required=False)
 
     def __init__(self, **kwargs):
         self.person = kwargs.pop('person')
