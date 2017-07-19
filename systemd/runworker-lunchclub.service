@@ -1,0 +1,13 @@
+[Unit]
+Description=Lunchclub worker
+PartOf=daphne-lunchclub.service
+Requires=daphne-lunchclub.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/apps/lunchclub
+ExecStart=/var/www/apps/lunchclub/venv/bin/python manage.py runworker --settings lunchclub.settings
+
+[Install]
+WantedBy=multi-user.target
