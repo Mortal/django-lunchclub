@@ -7,7 +7,6 @@ Requires=daphne-lunchclub.service
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/apps/lunchclub
-Environment=DJANGO_SETTINGS_MODULE=lunchclub.settings
 ExecStart=/var/www/apps/lunchclub/venv/bin/python keepalive.py
 
 [Install]

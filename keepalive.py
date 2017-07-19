@@ -1,6 +1,10 @@
+import os
 import time
 import datetime
 import subprocess
+
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'lunchclub.settings'
 
 while True:
     subprocess.check_call(
