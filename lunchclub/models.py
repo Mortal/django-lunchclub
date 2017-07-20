@@ -290,7 +290,8 @@ class Announce(models.Model):
 
     def notification(self):
         title, body = self.NOTIFICATION[self.kind]
-        return dict(title=title, body=body % str(self.created_by))
+        return dict(title=title, body=body % str(self.created_by),
+                    created_time_epoch_ms=dt_to_epoch_ms(self.created_time))
 
     @classmethod
     def current_notification_for_date(cls, today):
