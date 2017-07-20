@@ -8,6 +8,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/apps/lunchclub
 ExecStart=/var/www/apps/lunchclub/venv/bin/python keepalive.py
+EnvironmentFile=/var/www/apps/lunchclub/env.txt
 
 [Install]
 WantedBy=multi-user.target

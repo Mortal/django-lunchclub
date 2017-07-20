@@ -10,6 +10,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/apps/lunchclub
 ExecStart=/var/www/apps/lunchclub/venv/bin/daphne -b 127.0.0.1 -p 8002 lunchclub.asgi:channel_layer
+EnvironmentFile=/var/www/apps/lunchclub/env.txt
 
 [Install]
 WantedBy=multi-user.target
