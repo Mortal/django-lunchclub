@@ -85,6 +85,10 @@ function set_today_message(q) {
 }
 
 function set_today_announcement(a) {
+    if (a) {
+        var hhmm = epoch_ms_to_hhmm(a.created_time_epoch_ms);
+        window.title = '(' + hhmm + ') ' + a.title + ' - Lunchclub';
+    }
     document.getElementById('today-announcement').textContent = a ? a.body : '';
 }
 
@@ -127,6 +131,12 @@ function set_today_options(kind, options) {
         li.appendChild(anchor);
         container.appendChild(li);
     }
+}
+
+function epoch_ms_to_hhmm(e) {
+    var d = new Date;
+    d.setTime(e);
+    return ('0' + d.getHours()).substr(-2) + ':' + ('0' + d.getMinutes()).substr(-2);
 }
 
 function set_today_rsvps(rsvps) {
