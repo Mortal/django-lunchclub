@@ -2,7 +2,8 @@
 from channels.routing import route
 from .consumers import chat_stream
 from .consumers import today_events
-from lunchclub.settings import CHANNEL_SUBPATH as _S
+from django.conf import settings as _s
+_S = _s.CHANNEL_SUBPATH
 
 channel_routing = [
     route("http.request", chat_stream, path='^' + _S + r"/chat/stream/$"),
