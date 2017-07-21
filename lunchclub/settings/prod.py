@@ -3,7 +3,7 @@ from .common import *  # noqa
 import os, pwd
 
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-SECRET_KEY = os.environ['LUNCHCLUB_SUBMISSION_KEY'].encode('ascii')
+SUBMISSION_KEY = os.environ['LUNCHCLUB_SUBMISSION_KEY'].encode('ascii')
 DEBUG = False
 
 ADMINS = (
