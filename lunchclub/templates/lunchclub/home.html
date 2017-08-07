@@ -156,9 +156,9 @@ function set_today_rsvps(rsvps) {
 
     function help(status_key, status_name) {
         var list = document.createElement('li');
-        list.appendChild(document.createTextNode(status_name + ':'));
-        var ul = document.createElement('ul');
         var persons = by_status[status_key] || [];
+        list.appendChild(document.createTextNode(status_name + ': (' + persons.length + ')'));
+        var ul = document.createElement('ul');
         for (var i = 0; i < persons.length; ++i) {
             var l = document.createElement('li');
             l.appendChild(document.createTextNode(persons[i].display_name + ' '));
