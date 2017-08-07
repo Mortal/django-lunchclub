@@ -12,6 +12,9 @@
         {{ field }}
         {% endif %}
         {{ person }}
+        {% if person.rsvp %}
+        ({{ person.rsvp.status }})
+        {% endif %}
         </label>
     </li>
 {% endfor %}

@@ -301,8 +301,12 @@ class AttendanceToday(FormView):
     def get_form_kwargs(self, **kwargs):
         form_kwargs = super().get_form_kwargs(**kwargs)
         form_kwargs['person'] = self.request.person
-        form_kwargs['date'] = timezone.now().date()
-        form_kwargs['queryset'] = Person.last_attendance_order()
+        date = form_kwargs['date'] = timezone.now().date()
+        rsvp_qs = Rsvp.objects.filter(date=date)
+        rsvp_data = {o.person_id: o for o in rsvp_qs}
+        qs = form_kwargs['queryset'] = list(Person.last_attendance_order())
+        for person in qs:
+            person.rsvp = rsvp_data.get(person.pk)
         return form_kwargs
 
     def form_valid(self, form):
