@@ -4,8 +4,6 @@ import datetime
 import subprocess
 
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'lunchclub.settings'
-
 while True:
     subprocess.check_call(
         ('venv/bin/python', '-c', 'import django; django.setup(); ' +
