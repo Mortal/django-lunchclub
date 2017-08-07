@@ -3,6 +3,8 @@ from .common import *  # noqa
 import os, pwd
 
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+if len(SECRET_KEY) != 50:
+    raise ValueError(SECRET_KEY)
 SUBMISSION_KEY = os.environ['LUNCHCLUB_SUBMISSION_KEY'].encode('ascii')
 DEBUG = False
 
