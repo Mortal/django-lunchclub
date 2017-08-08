@@ -125,6 +125,7 @@ class Home(TemplateView):
                 person_months.append(dict(balance=balances[person][y, m]))
             person_data.append(dict(
                 username=person.username, balance=person.balance,
+                display_name=person.display_name,
                 months=person_months))
 
         data['persons'] = person_data

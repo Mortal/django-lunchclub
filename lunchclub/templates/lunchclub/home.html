@@ -144,11 +144,20 @@ function epoch_ms_to_hhmm(e) {
     return ('0' + d.getHours()).substr(-2) + ':' + ('0' + d.getMinutes()).substr(-2);
 }
 
+function display_rsvp_in_table(rsvp) {
+    var username = rsvp['username'];
+    var el = document.getElementById('person-' + username);
+    if (!el) return;
+    var name = el.getAttribute('data-name');
+    el.textContent = name + ' (' + rsvp['status'] + ')';
+}
+
 function set_today_rsvps(rsvps) {
     var container = get_today_options_container('rsvps', 'today-rsvps');
     container.innerHTML = '';
     var by_status = {};
     for (var i = 0; i < rsvps.length; ++i) {
+        display_rsvp_in_table(rsvps[i]);
         if (!(rsvps[i].status in by_status))
             by_status[rsvps[i].status] = [];
         by_status[rsvps[i].status].push(rsvps[i]);
@@ -259,7 +268,8 @@ today_events.addEventListener('notification', function (e) {
 </thead>
 <tbody>
 {% for person in persons %}
-<th>{{ person.username }}</th>
+<th id="person-{{ person.username }}" data-name="{{ person.display_name }}">
+{{ person.display_name }}</th>
 <td>{{ person.balance|floatformat:2 }}</td>
 {% for month in person.months %}
 <td>{{ month.balance|floatformat:2 }}</td>
