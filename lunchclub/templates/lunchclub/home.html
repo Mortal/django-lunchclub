@@ -36,6 +36,21 @@ content: "";
     color: #777;
 }
 
+.rsvp-yes {
+    background-color: #afa;
+    border-color: #aea;
+}
+
+.rsvp-own {
+    background-color: #ffa;
+    border-color: #eea;
+}
+
+.rsvp-no {
+    background-color: #faa;
+    border-color: #eaa;
+}
+
 @media screen and (max-width: 480px) {
     input[type=number] {
     height: 40px;
@@ -150,6 +165,7 @@ function display_rsvp_in_table(rsvp) {
     if (!el) return;
     var name = el.getAttribute('data-name');
     el.textContent = name + ' (' + rsvp['status'] + ')';
+    el.className = 'rsvp-' + rsvp['status'];
 }
 
 function set_today_rsvps(rsvps) {
