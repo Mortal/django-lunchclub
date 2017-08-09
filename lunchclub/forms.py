@@ -109,27 +109,22 @@ class AccessTokenListForm(forms.Form):
         self.persons = []
         self.rows = []
 
-        tokens = AccessToken.all_as_dict()
+        self.tokens = AccessToken.all_as_dict()
 
         for person in queryset.select_related():
-            keys = {}
-            entry = {'person': person, 'keys': keys}
-
             base = '%s_' % person.username
 
             user = person.user or User()
-            keys['email'] = k = base + 'email'
-            entry['email'] = self.fields[k] = forms.EmailField(
+            self.fields[base + 'email'] = forms.EmailField(
                 initial=user.email, required=False)
 
             for field in 'revoke generate send'.split():
-                keys[field] = k = base + field
-                entry[field] = self.fields[k] = forms.BooleanField(
+                self.fields[base + field] = forms.BooleanField(
                     required=False)
 
-            entry['token'] = token = tokens.get(person, AccessToken())
+            token = self.tokens.get(person, AccessToken())
 
-            self.persons.append(entry)
+            self.persons.append(person)
             self.rows.append((
                 person, token.login_url(),
                 self[base + 'email'],
@@ -140,23 +135,23 @@ class AccessTokenListForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        for entry in self.persons:
-            keys = entry['keys']
-            if keys['email'] in data and not data[keys['email']]:
+        for person in self.persons:
+            token = self.tokens.get(person, AccessToken())
+            base = '%s_' + person.username
+            if base + 'email' in data and not data[base + 'email']:
                 # No email specified
-                if data[keys['send']]:
+                if data[base + 'send']:
                     # Wanted to send an email
-                    self.add_error(keys['send'], 'Email address required')
-            if data[keys['revoke']] and not entry['token'].token:
-                self.add_error(keys['revoke'], 'No token to revoke!')
+                    self.add_error(base + 'send', 'Email address required')
+            if data[base + 'revoke'] and not token.token:
+                self.add_error(base + 'revoke', 'No token to revoke!')
             already_has_token = (
-                entry['token'].token and not data[keys['revoke']])
-            if data[keys['generate']] and already_has_token:
-                self.add_error(keys['generate'], 'Already has token!')
+                token.token and not data[base + 'revoke'])
+            if data[base + 'generate'] and already_has_token:
+                self.add_error(base + 'generate', 'Already has token!')
 
     def actions(self):
         data = self.cleaned_data
-        tokens = AccessToken.all_as_dict()
 
         set_email = []
         revoke_tokens = []
@@ -164,27 +159,28 @@ class AccessTokenListForm(forms.Form):
         messages = []
         recipients = []
 
-        for entry in self.persons:
-            keys = entry['keys']
-            email_changed = data[keys['email']] != entry['email'].initial
+        for person in self.persons:
+            base = '%s_' + person.username
+            email_changed = (data[base + 'email'] !=
+                             self.fields[base + 'email'].initial)
             if email_changed:
-                set_email.append((entry['person'].get_or_create_user(),
-                                  data[keys['email']]))
-            if data[keys['revoke']]:
-                revoke_tokens.append(tokens.pop(entry['person']))
-            if data[keys['generate']]:
-                token = AccessToken.fresh(entry['person'])
+                set_email.append((person.get_or_create_user(),
+                                  data[base + 'email']))
+            if data[base + 'revoke']:
+                revoke_tokens.append(self.tokens.pop(person))
+            if data[base + 'generate']:
+                token = AccessToken.fresh(person)
                 save_tokens.append(token)
-                tokens[entry['person']] = token
-            if data[keys['send']]:
-                link = tokens[entry['person']].login_url()
-                recipient = data[keys['email']]
+                self.tokens[person] = token
+            if data[base + 'send']:
+                link = self.tokens[person].login_url()
+                recipient = data[base + 'email']
                 assert recipient
-                assert entry['person'].username
+                assert person.username
                 assert link
                 recipients.append(recipient)
                 messages.append(lunchclub.mail.prepare_login_message(
-                    name=entry['person'].username,
+                    name=person.username,
                     email=recipient,
                     link=link,
                 ))
