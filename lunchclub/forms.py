@@ -116,10 +116,9 @@ class AccessTokenListForm(forms.Form):
             user = person.user or User()
             self.fields[base + 'email'] = forms.EmailField(
                 initial=user.email, required=False)
-
-            for field in 'revoke generate send'.split():
-                self.fields[base + field] = forms.BooleanField(
-                    required=False)
+            self.fields[base + 'revoke'] = forms.BooleanField(required=False)
+            self.fields[base + 'generate'] = forms.BooleanField(required=False)
+            self.fields[base + 'send'] = forms.BooleanField(required=False)
 
             token = self.tokens.get(person, AccessToken())
 
