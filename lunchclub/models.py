@@ -29,7 +29,7 @@ class Person(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.username
+        return self.display_name
 
     class Meta:
         ordering = ['username']
