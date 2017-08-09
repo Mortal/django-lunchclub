@@ -5,7 +5,6 @@ import datetime
 
 from django import forms
 from django.contrib.auth.models import User
-from django.conf import settings
 
 from lunchclub.models import (
     recompute_balances, AccessToken, Expense, Attendance,
@@ -272,7 +271,6 @@ class AttendanceTodayForm(forms.Form):
         return [p for p, k in self.persons if self.cleaned_data[k]]
 
     def save(self):
-        data = self.cleaned_data
         objects = [
             Attendance(date=self.date,
                        person=p,
@@ -375,7 +373,6 @@ class AttendanceCreateForm(forms.Form):
                       key=lambda x: (x[0].username, x[1]))
 
     def save(self):
-        data = self.cleaned_data
         objects = [
             Attendance(date=d, person=p,
                        created_by=self.person)
