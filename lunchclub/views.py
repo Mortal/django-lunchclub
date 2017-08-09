@@ -234,22 +234,10 @@ class AccessTokenList(FormView):
         return form_kwargs
 
     def form_valid(self, form):
-        set_email, revoke_tokens, save_tokens, messages, save = form.actions()
-
-        for user, email in set_email:
-            logger.info("%s: Set email address of %s to %s",
-                        self.request.user.username,
-                        user.username, email)
-        for token in save_tokens:
-            logger.info("%s: Create %s token %s",
-                        self.request.user.username, token.person.username,
-                        token.token[:20])
-        for token in revoke_tokens:
-            logger.info("%s: Revoke %s token %s with %s use(s)",
-                        self.request.user.username, token.person.username,
-                        token.token[:20], token.use_count)
-
-        save()
+        changes, messages = form.actions()
+        for s, *args in changes.log_entries():
+            logger.info("%s: " + s, self.request.user.username, *args)
+        changes.save()
 
         fresh_kwargs = self.get_form_kwargs()
         fresh_kwargs.pop('data', None)

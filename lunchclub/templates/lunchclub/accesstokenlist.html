@@ -22,6 +22,7 @@ you must send them yourself:</p>
 <thead>
 <tr>
     <th>Person</th>
+    <th>Display name</th>
     <th>Login URL</th>
     <th>Email</th>
     <th>Revoke login</th>
@@ -30,9 +31,10 @@ you must send them yourself:</p>
 </tr>
 </thead>
 <tbody>
-{% for person, login_url, email, revoke, generate, send in form.rows %}
+{% for person, name, login_url, email, revoke, generate, send in form.rows %}
 <tr>
     <th>{{ person }}</th>
+    <th>{{ name }}</th>
     <td><input value="{{ login_url }}" onfocus="this.select()" /></td>
     <td>{{ email }}</td>
     <td>{{ revoke }}</td>

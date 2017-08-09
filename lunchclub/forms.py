@@ -2,6 +2,7 @@ import re
 import json
 import decimal
 import datetime
+import collections
 
 from django import forms
 from django.contrib.auth.models import User
@@ -101,6 +102,42 @@ class SearchForm(forms.Form):
 
 
 class AccessTokenListForm(forms.Form):
+    ChangesBase = collections.namedtuple(
+        'Changes',
+        'save_person set_name set_email revoke_tokens save_tokens')
+
+    class Changes(ChangesBase):
+        def log_entries(self):
+            for person in self.save_person:
+                yield ("Create %s", person.username)
+            for person, name in self.set_name:
+                yield ("Set name of %s to %s", person.username, name)
+            for person, email in self.set_email:
+                yield ("Set email address of %s to %s", person.username, email)
+            for token in self.revoke_tokens:
+                yield ("Revoke %s token %s with %s use(s)",
+                       token.person.username,
+                       token.token[:20], token.use_count)
+            for token in self.save_tokens:
+                yield ("Create %s token %s",
+                       token.person.username,
+                       token.token[:20])
+
+        def save(self):
+            for person in self.save_person:
+                person.save()
+            for person, name in self.set_name:
+                person.display_name = name
+                person.save()
+            for person, email in self.set_email:
+                user = person.get_or_create_user()
+                user.email = email
+                user.save()
+            for token in self.revoke_tokens:
+                token.delete()
+            for token in self.save_tokens:
+                token.save()
+
     def __init__(self, **kwargs):
         queryset = kwargs.pop('queryset')
         super().__init__(**kwargs)
@@ -110,21 +147,33 @@ class AccessTokenListForm(forms.Form):
 
         self.tokens = AccessToken.all_as_dict()
 
-        for person in queryset.select_related():
+        for person in list(queryset.select_related()) + [Person()]:
             base = 'p_%s_' % person.username
-
+            # The last person is a "new person" for which base == 'p__'.
             user = person.user or User()
-            self.fields[base + 'email'] = forms.EmailField(
+
+            self.fields[base + 'name'] = forms.CharField(
+                initial=person.display_name, required=False)
+            self.fields[base + 'email'] = forms.CharField(
                 initial=user.email, required=False)
             self.fields[base + 'revoke'] = forms.BooleanField(required=False)
             self.fields[base + 'generate'] = forms.BooleanField(required=False)
             self.fields[base + 'send'] = forms.BooleanField(required=False)
 
-            token = self.tokens.get(person, AccessToken())
+            token = (person.pk and self.tokens.get(person)) or AccessToken()
+
+            if person.pk:
+                person_cell = person
+            else:
+                self.fields[base + 'username'] = forms.CharField(
+                    required=False)
+                person_cell = self[base + 'username']
 
             self.persons.append(person)
             self.rows.append((
-                person, token.login_url(),
+                person_cell,
+                self[base + 'name'],
+                token.login_url(),
                 self[base + 'email'],
                 self[base + 'revoke'],
                 self[base + 'generate'],
@@ -134,9 +183,37 @@ class AccessTokenListForm(forms.Form):
     def clean(self):
         data = self.cleaned_data
         for person in self.persons:
-            token = self.tokens.get(person, AccessToken())
+            token = (person.pk and self.tokens.get(person)) or AccessToken()
             base = 'p_%s_' % person.username
-            if base + 'email' in data and not data[base + 'email']:
+            if person.pk is None:
+                # This is the row for creating a new person
+                any_data = any([
+                    data[base + 'username'],
+                    data[base + 'name'],
+                    data[base + 'email'],
+                    data[base + 'revoke'],
+                    data[base + 'generate'],
+                    data[base + 'send'],
+                ])
+                if not any_data:
+                    continue
+                if not data.get(base + 'username'):
+                    self.add_error(base + 'username', 'Username is required')
+                else:
+                    existing = Person.objects.filter(
+                        username=data[base + 'username'])
+                    if existing.exists():
+                        self.add_error(base + 'username', 'Username is taken')
+
+            if not data[base + 'name']:
+                self.add_error(base + 'name', 'Display name is required')
+            if data[base + 'email']:
+                if '@' not in data[base + 'email']:
+                    data[base + 'email'] += '@cs.au.dk'
+                email = data[base + 'email']
+                if not email.count('@') == email.strip('@').count('@') == 1:
+                    self.add_error(base + 'email', 'Invalid email address')
+            else:
                 # No email specified
                 if data[base + 'send']:
                     # Wanted to send an email
@@ -151,6 +228,8 @@ class AccessTokenListForm(forms.Form):
     def actions(self):
         data = self.cleaned_data
 
+        save_person = []
+        set_name = []
         set_email = []
         revoke_tokens = []
         save_tokens = []
@@ -159,11 +238,21 @@ class AccessTokenListForm(forms.Form):
 
         for person in self.persons:
             base = 'p_%s_' % person.username
+            if person.pk is None:
+                if data[base + 'username']:
+                    person.username = data[base + 'username']
+                    person.balance = 0
+                    save_person.append(person)
+                else:
+                    continue
+            name_changed = (data[base + 'name'] !=
+                            self.fields[base + 'name'].initial)
+            if name_changed:
+                set_name.append((person, data[base + 'name']))
             email_changed = (data[base + 'email'] !=
                              self.fields[base + 'email'].initial)
             if email_changed:
-                set_email.append((person.get_or_create_user(),
-                                  data[base + 'email']))
+                set_email.append((person, data[base + 'email']))
             if data[base + 'revoke']:
                 revoke_tokens.append(self.tokens.pop(person))
             if data[base + 'generate']:
@@ -183,16 +272,8 @@ class AccessTokenListForm(forms.Form):
                     link=link,
                 ))
 
-        def save():
-            for user, email in set_email:
-                user.email = email
-                user.save()
-            for token in revoke_tokens:
-                token.delete()
-            for token in save_tokens:
-                token.save()
-
-        return set_email, revoke_tokens, save_tokens, messages, save
+        return self.Changes(save_person, set_name, set_email,
+                            revoke_tokens, save_tokens), messages
 
 
 class ExpenseCreateForm(forms.Form):
