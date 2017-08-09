@@ -111,7 +111,7 @@ class AccessTokenListForm(forms.Form):
         self.tokens = AccessToken.all_as_dict()
 
         for person in queryset.select_related():
-            base = '%s_' % person.username
+            base = 'p_%s_' % person.username
 
             user = person.user or User()
             self.fields[base + 'email'] = forms.EmailField(
@@ -135,7 +135,7 @@ class AccessTokenListForm(forms.Form):
         data = self.cleaned_data
         for person in self.persons:
             token = self.tokens.get(person, AccessToken())
-            base = '%s_' + person.username
+            base = 'p_%s_' % person.username
             if base + 'email' in data and not data[base + 'email']:
                 # No email specified
                 if data[base + 'send']:
@@ -158,7 +158,7 @@ class AccessTokenListForm(forms.Form):
         recipients = []
 
         for person in self.persons:
-            base = '%s_' + person.username
+            base = 'p_%s_' % person.username
             email_changed = (data[base + 'email'] !=
                              self.fields[base + 'email'].initial)
             if email_changed:
