@@ -25,6 +25,7 @@ from lunchclub.views import (
     ShoppingList, chat_publish,
     today_update,
 )
+from roomcalendar.views import CalendarUpdate
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -44,4 +45,5 @@ urlpatterns = [
     url(r'^chat/$', TemplateView.as_view(template_name='chat.html')),
     url(r'^chat/publish/$', chat_publish),
     url(r'^today/update/$', today_update),
+    url(r'^calendar/update/$', CalendarUpdate.as_view()),
 ]
