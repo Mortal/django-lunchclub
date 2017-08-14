@@ -1,4 +1,15 @@
 {% extends "lunchclub/base.html" %}
+{% block head %}
+<style>
+#accesstokentable > tbody > tr > th > input {
+width: 5em;
+}
+#accesstokentable > tbody > tr > .link > input {
+width: 5em;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>Lunchclub access tokens</h1>
 
@@ -18,7 +29,7 @@ you must send them yourself:</p>
 
 <form method="post">{% csrf_token %}
 
-<table>
+<table id="accesstokentable">
 <thead>
 <tr>
     <th>Person</th>
@@ -35,7 +46,7 @@ you must send them yourself:</p>
 <tr>
     <th>{{ person }}</th>
     <th>{{ name }}</th>
-    <td><input value="{{ login_url }}" onfocus="this.select()" /></td>
+    <td class="link"><input value="{{ login_url }}" onfocus="this.select()" /></td>
     <td>{{ email }}</td>
     <td>{{ revoke }}</td>
     <td>{{ generate }}</td>
