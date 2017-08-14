@@ -40,6 +40,7 @@ from lunchclub.parser import (
     unparse_attenddb, unparse_expensedb,
 )
 import lunchclub.mail
+from roomcalendar.models import Calendar
 
 
 logger = logging.getLogger('lunchclub')
@@ -129,6 +130,7 @@ class Home(TemplateView):
                 months=person_months))
 
         data['persons'] = person_data
+        data['calendars'] = Calendar.objects.all().order_by('name')
         return data
 
 

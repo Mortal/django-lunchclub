@@ -252,6 +252,19 @@ today_events.addEventListener('notification', function (e) {
     <input type="submit" value="Enter expense" />
 </form>
 
+{% for calendar in calendars %}
+{% with calendar.today_items as qs %}
+{% if qs %}
+<p>Today's reservations of {{ calendar }}:</p>
+<ul>
+{% for o in qs %}
+<li>{{ o }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+{% endfor %}
+
 {% else %}
 <p>Welcome to the lunchclub! Contact the lunchclub admin to get a login.</p>
 {% endif %}
