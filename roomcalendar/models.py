@@ -13,6 +13,9 @@ class Calendar(models.Model):
     name = models.CharField(max_length=200)
     created_time = models.DateTimeField()
 
+    def __str__(self):
+        return self.name
+
     def today_items(self):
         return CalendarItem.existing_for_date(calendar=self,
                                               date=timezone.now().date())
