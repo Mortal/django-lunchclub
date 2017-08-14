@@ -163,7 +163,7 @@ class AccessTokenListForm(forms.Form):
             token = (person.pk and self.tokens.get(person)) or AccessToken()
 
             if person.pk:
-                person_cell = person
+                person_cell = person.username
             else:
                 self.fields[base + 'username'] = forms.CharField(
                     required=False)
