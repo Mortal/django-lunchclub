@@ -20,6 +20,8 @@ class CalendarUpdate(View):
         user = TokenBackend().authenticate(token)
         if user is None:
             return HttpResponseBadRequest('Unauthorized')
+        if not user.is_superuser:
+            return HttpResponseBadRequest('Not superuser')
         payload_str = request.POST.get('payload') or ''
         try:
             payload = json.loads(payload_str)
