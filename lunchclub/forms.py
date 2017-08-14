@@ -166,7 +166,8 @@ class AccessTokenListForm(forms.Form):
                 person_cell = person.username
             else:
                 self.fields[base + 'username'] = forms.CharField(
-                    required=False)
+                    required=False, widget=forms.TextInput(
+                        {'placeholder': 'New username'}))
                 person_cell = self[base + 'username']
 
             self.persons.append(person)
