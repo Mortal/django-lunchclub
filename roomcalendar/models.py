@@ -41,8 +41,8 @@ class CalendarItem(models.Model):
 
     def __str__(self):
         return '%s-%s %s' % (
-            self.start_time.strftime('%H:%M'),
-            self.end_time.strftime('%H:%M'),
+            timezone.localtime(self.start_time).strftime('%H:%M'),
+            timezone.localtime(self.end_time).strftime('%H:%M'),
             self.subject,
         )
 
