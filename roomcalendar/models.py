@@ -59,6 +59,7 @@ class CalendarItem(models.Model):
             if o is not ex:
                 # Duplicate
                 delete.append(o)
+        current = {}
         new = []
         now = timezone.now()
         for item in items:
@@ -78,9 +79,11 @@ class CalendarItem(models.Model):
                     subject=subject, start_time=start, end_time=end,
                     date=date, created_by=created_by, created_time=now)
             o.clean()
-            ex = existing.setdefault((subject, start, end), o)
+            k = (subject, start, end)
+            ex = current[k] = existing.setdefault(k, o)
             if ex is o:
                 new.append(o)
+        delete.extend(existing[k] for k in existing.keys() - current.keys())
         for o in delete:
             logger.info('%s: Delete %r', created_by, o)
             o.delete()
