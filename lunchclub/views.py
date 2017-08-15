@@ -63,6 +63,8 @@ superuser_required = method_decorator(
 def dispatch_person_required(function):
     @functools.wraps(function)
     def dispatch(request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            return permission_denied(request, exception=None)
         try:
             request.person = Person.objects.get(user=request.user)
         except Person.DoesNotExist:
