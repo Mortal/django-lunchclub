@@ -17,8 +17,10 @@ class Calendar(models.Model):
         return self.name
 
     def today_items(self):
-        return CalendarItem.existing_for_date(calendar=self,
-                                              date=timezone.now().date())
+        today = timezone.now().date()
+        items = list(CalendarItem.existing_for_date(calendar=self, date=today))
+        items.sort(key=lambda o: o.start_time)
+        return items
 
     @classmethod
     def get_or_create(cls, name):
