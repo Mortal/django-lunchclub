@@ -233,6 +233,11 @@ def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
 
 
 def recompute_balances():
+    '''
+    Update every Person's balance attribute.
+
+    Must be called every time expenses/attendances are changed.
+    '''
     expense_qs = Expense.objects.all()
     attendance_qs = Attendance.objects.all()
     meal_prices, balances = compute_month_balances(expense_qs,
@@ -246,6 +251,11 @@ def recompute_balances():
 
 
 def get_average_meal_price():
+    '''
+    Return the average meal price over all time.
+
+    Used in the Home view.
+    '''
     expense_qs = Expense.objects.all()
     attendance_qs = Attendance.objects.all()
     expense_sum = expense_qs.aggregate(s=Sum('amount'))['s']
