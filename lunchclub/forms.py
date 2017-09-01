@@ -53,6 +53,9 @@ class DatabaseBulkEditForm(forms.Form):
         return o
 
     def clean(self):
+        '''
+        Compute diff between hidden initial data and textarea data.
+        '''
         if 'initial' in self.cleaned_data:
             apks = sorted(
                 self.cleaned_data['initial'].get('attendance_pks', []))
@@ -73,6 +76,11 @@ class DatabaseBulkEditForm(forms.Form):
                 get_expensedb_from_model(), self.cleaned_data['expense'])
 
     def iter_created_removed(self):
+        '''
+        Return a generator over log lines that should be emitted when calling
+        save(). This method is used both when previewing changes and when
+        committing changes to this form.
+        '''
         categories = [
             ('Create attendance', 'diff_attendance', 0),
             ('Remove attendance', 'diff_attendance', 1),
@@ -91,6 +99,17 @@ class DatabaseBulkEditForm(forms.Form):
 
 
 class SearchForm(forms.Form):
+    '''
+    Search form used in Home view to specify what months to display.
+
+    All fields have defaults, so the empty submission is valid:
+
+    >>> form = SearchForm(data={})
+    >>> form.is_valid()
+    True
+
+    This makes the search form usable with GET requests.
+    '''
     months = forms.IntegerField(min_value=1, initial=10, required=False)
     show_all = forms.BooleanField(required=False)
 
