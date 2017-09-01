@@ -216,12 +216,16 @@ def compute_meal_prices(expense_qs=None, attendance_qs=None):
             for month, (expenses, attendances) in months.items()}
 
 
-def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
+def compute_month_balances(expense_qs=None, attendance_qs=None,
+                           meal_prices=None):
     '''
     Return the average meal price for each month.
 
     Used in the Home view and in recompute_balances().
     '''
+    if expense_qs is None and attendance_qs is None:
+        expense_qs = Expense.objects.all()
+        attendance_qs = Attendance.objects.all()
     if meal_prices is None:
         meal_prices = compute_meal_prices(expense_qs, attendance_qs)
     # balances[p][m] == b means person p has balance b in month m
@@ -243,10 +247,7 @@ def recompute_balances():
 
     Must be called every time expenses/attendances are changed.
     '''
-    expense_qs = Expense.objects.all()
-    attendance_qs = Attendance.objects.all()
-    meal_prices, balances = compute_month_balances(expense_qs,
-                                                   attendance_qs)
+    meal_prices, balances = compute_month_balances()
     # If a Person has no attendance/expenses, they aren't in "balances".
     # Set their balance to 0 in this case.
     Person.objects.all().update(balance=0)
