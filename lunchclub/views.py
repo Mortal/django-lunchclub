@@ -394,13 +394,11 @@ class Submit(View):
         payload = data[64:]
         save_payload = self.parse_payload(payload)
         if save_payload is None:
-            print(payload)
             return HttpResponseBadRequest('Failed to parse payload')
         mac = hmac.new(settings.SUBMISSION_KEY,
                        payload,
                        hashlib.sha512).digest()
         if not constant_time_compare(input_mac, mac):
-            print(payload, input_mac, mac)
             return HttpResponseBadRequest('MAC failed')
 
         result = save_payload()
