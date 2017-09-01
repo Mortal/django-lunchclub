@@ -254,11 +254,11 @@ def recompute_balances():
     Must be called every time expenses/attendances are changed.
     '''
     meal_prices, balances = compute_month_balances()
-    # If a Person has no attendance/expenses, they aren't in "balances".
-    # Set their balance to 0 in this case.
-    Person.objects.all().update(balance=0)
-    for p_id, a in balances.items():
-        Person.objects.filter(id=p_id).update(balance=sum(a.values()))
+
+    person_ids = Person.objects.all().values_list('id', flat=True)
+    for p_id in person_ids:
+        person_balance = sum(balances.get(p_id, {}).values())
+        Person.objects.filter(id=p_id).update(balance=person_balance)
 
 
 def get_average_meal_price():
