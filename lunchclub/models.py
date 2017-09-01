@@ -239,9 +239,9 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
     # of each Person.
     balances = collections.defaultdict(
         lambda: collections.defaultdict(decimal.Decimal))
-    attendances = set((a.person, a.month, a.date) for a in attendance_qs)
-    for person, month, date in attendances:
-        balances[person.id][month] -= meal_prices[month]
+    attendances = set((a.person_id, a.month, a.date) for a in attendance_qs)
+    for person_id, month, date in attendances:
+        balances[person_id][month] -= meal_prices[month]
     for e in expense_qs:
         balances[e.person_id][e.month] += e.amount
     return meal_prices, balances
