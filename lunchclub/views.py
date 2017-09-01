@@ -125,7 +125,7 @@ class Home(TemplateView):
         for person in person_qs:
             person_months = []
             for (y, m) in months:
-                person_months.append(dict(balance=balances[person][y, m]))
+                person_months.append(dict(balance=balances[person.id][y, m]))
             person_data.append(dict(
                 username=person.username, balance=person.balance,
                 display_name=person.display_name,

@@ -225,7 +225,7 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
 
     Returns:
         - meal_prices: dict mapping (y, m) to Decimal (price per meal)
-        - balances: dict mapping Person to dict mapping (y, m) to Decimal
+        - balances: dict mapping Person.pk to dict mapping (y, m) to Decimal
 
     Used in the Home view and in recompute_balances().
     '''
@@ -241,9 +241,9 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
         lambda: collections.defaultdict(decimal.Decimal))
     attendances = set((a.person, a.month, a.date) for a in attendance_qs)
     for person, month, date in attendances:
-        balances[person][month] -= meal_prices[month]
+        balances[person.id][month] -= meal_prices[month]
     for e in expense_qs:
-        balances[e.person][e.month] += e.amount
+        balances[e.person_id][e.month] += e.amount
     return meal_prices, balances
 
 
@@ -257,9 +257,8 @@ def recompute_balances():
     # If a Person has no attendance/expenses, they aren't in "balances".
     # Set their balance to 0 in this case.
     Person.objects.all().update(balance=0)
-    for p, a in balances.items():
-        p.balance = sum(a.values())
-        p.save()
+    for p_id, a in balances.items():
+        Person.objects.filter(id=p_id).update(balance=sum(a.values()))
 
 
 def get_average_meal_price():
