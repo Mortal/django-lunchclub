@@ -200,7 +200,10 @@ def safediv(x, y):
     return float('inf') if y == 0 else x / y
 
 
-def compute_meal_prices(expense_qs, attendance_qs):
+def compute_meal_prices(expense_qs=None, attendance_qs=None):
+    if expense_qs is None and attendance_qs is None:
+        expense_qs = Expense.objects.all()
+        attendance_qs = Attendance.objects.all()
     # Count attendances using a set in order to remove duplicate
     # (date,person)-pairs.
     months = collections.defaultdict(lambda: ([], set()))
@@ -227,10 +230,6 @@ def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
     for e in expense_qs:
         balances[e.person][e.month] += e.amount
     return meal_prices, balances
-
-
-def compute_all_meal_prices():
-    return compute_meal_prices(Expense.objects.all(), Attendance.objects.all())
 
 
 def recompute_balances():
