@@ -217,6 +217,11 @@ def compute_meal_prices(expense_qs=None, attendance_qs=None):
 
 
 def compute_month_balances(expense_qs, attendance_qs, meal_prices=None):
+    '''
+    Return the average meal price for each month.
+
+    Used in the Home view and in recompute_balances().
+    '''
     if meal_prices is None:
         meal_prices = compute_meal_prices(expense_qs, attendance_qs)
     # balances[p][m] == b means person p has balance b in month m
