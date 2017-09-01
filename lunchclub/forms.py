@@ -125,6 +125,8 @@ class AccessTokenListForm(forms.Form):
         'Changes',
         'save_person set_name set_email revoke_tokens save_tokens')
 
+    default_email_domain = 'cs.au.dk'
+
     class Changes(ChangesBase):
         def log_entries(self):
             for person in self.save_person:
@@ -228,8 +230,11 @@ class AccessTokenListForm(forms.Form):
             if not data[base + 'name']:
                 self.add_error(base + 'name', 'Display name is required')
             if data[base + 'email']:
-                if '@' not in data[base + 'email']:
-                    data[base + 'email'] += '@cs.au.dk'
+                add_default = ('@' not in data[base + 'email'] and
+                               self.default_email_domain)
+                if add_default:
+                    data[base + 'email'] += '@' + self.default_email_domain
+
                 email = data[base + 'email']
                 if not email.count('@') == email.strip('@').count('@') == 1:
                     self.add_error(base + 'email', 'Invalid email address')

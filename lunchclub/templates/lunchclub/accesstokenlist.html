@@ -25,6 +25,11 @@ you must send them yourself:</p>
 <p>Changes saved!</p>
 {% endif %}
 
+{% if form.default_email_domain %}
+<p>Hint: If you don't specify the domain name of the email address,
+a default of <tt>@{{ form.default_email_domain }}</tt> will be assumed.</p>
+{% endif %}
+
 {{ form.errors }}
 
 <form method="post">{% csrf_token %}
