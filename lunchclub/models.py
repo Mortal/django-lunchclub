@@ -196,11 +196,6 @@ class AccessToken(models.Model):
         return cls(person=person, token=token)
 
 
-def safediv(x, y):
-    '''Internal helper function to avoid ZeroDivisionError.'''
-    return float('inf') if y == 0 else x / y
-
-
 def compute_meal_prices(expense_qs=None, attendance_qs=None):
     '''Internal function used by compute_month_balances().'''
     if expense_qs is None and attendance_qs is None:
@@ -213,8 +208,8 @@ def compute_meal_prices(expense_qs=None, attendance_qs=None):
         months[o.month][0].append(o)
     for o in attendance_qs:
         months[o.month][1].add((o.date, o.person_id))
-    return {month: safediv(sum(e.amount for e in expenses),
-                           decimal.Decimal(len(attendances)))
+    return {month: float('inf') if not attendances else
+            sum(e.amount for e in expenses) / decimal.Decimal(len(attendances))
             for month, (expenses, attendances) in months.items()}
 
 
