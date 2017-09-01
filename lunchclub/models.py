@@ -197,10 +197,12 @@ class AccessToken(models.Model):
 
 
 def safediv(x, y):
+    '''Internal helper function to avoid ZeroDivisionError.'''
     return float('inf') if y == 0 else x / y
 
 
 def compute_meal_prices(expense_qs=None, attendance_qs=None):
+    '''Internal function used by compute_month_balances().'''
     if expense_qs is None and attendance_qs is None:
         expense_qs = Expense.objects.all()
         attendance_qs = Attendance.objects.all()
@@ -219,7 +221,11 @@ def compute_meal_prices(expense_qs=None, attendance_qs=None):
 def compute_month_balances(expense_qs=None, attendance_qs=None,
                            meal_prices=None):
     '''
-    Return the average meal price for each month.
+    Compute each Person's balance change in each month.
+
+    Returns:
+        - meal_prices: dict mapping (y, m) to Decimal (price per meal)
+        - balances: dict mapping Person to dict mapping (y, m) to Decimal
 
     Used in the Home view and in recompute_balances().
     '''
