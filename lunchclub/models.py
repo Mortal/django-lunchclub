@@ -212,7 +212,7 @@ def compute_meal_prices(expense_qs=None, attendance_qs=None):
     for o in expense_qs:
         months[o.month][0].append(o)
     for o in attendance_qs:
-        months[o.month][1].add((o.date, o.person))
+        months[o.month][1].add((o.date, o.person_id))
     return {month: safediv(sum(e.amount for e in expenses),
                            decimal.Decimal(len(attendances)))
             for month, (expenses, attendances) in months.items()}
