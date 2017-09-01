@@ -234,9 +234,6 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
         attendance_qs = Attendance.objects.all()
     if meal_prices is None:
         meal_prices = compute_meal_prices(expense_qs, attendance_qs)
-    # balances[p][m] == b means person p has balance b in month m
-    # Note that we mutate p.balance, so we must have only one instance
-    # of each Person.
     balances = collections.defaultdict(
         lambda: collections.defaultdict(decimal.Decimal))
     attendances = set((a.person_id, a.month, a.date) for a in attendance_qs)
