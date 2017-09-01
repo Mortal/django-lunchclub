@@ -316,7 +316,6 @@ class ExpenseCreateForm(forms.Form):
             # If the form is invalid, we want to redisplay it with "myself"
             # as the chosen person.
             kwargs['data'] = kwargs['data'].copy()
-            print(kwargs['data'])
             kwargs['data']['person'] = self.person.pk
         super().__init__(**kwargs)
         self.fields['person'].choices = [
