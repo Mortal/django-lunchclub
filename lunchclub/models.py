@@ -224,8 +224,8 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
     Compute each Person's balance change in each month.
 
     Returns:
-        - meal_prices: dict mapping (y, m) to Decimal (price per meal)
-        - balances: dict mapping Person.pk to dict mapping (y, m) to Decimal
+        - meal_prices: defaultdict mapping (y, m) to Decimal (price per meal)
+        - balances: nested defaultdicts mapping person_id -> (y, m) -> Decimal
 
     Used in the Home view and in recompute_balances().
     '''
@@ -254,7 +254,7 @@ def recompute_balances():
 
     person_ids = Person.objects.all().values_list('id', flat=True)
     for p_id in person_ids:
-        person_balance = sum(balances.get(p_id, {}).values())
+        person_balance = sum(balances[p_id].values())
         Person.objects.filter(id=p_id).update(balance=person_balance)
 
 
