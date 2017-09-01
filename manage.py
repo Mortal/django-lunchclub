@@ -3,7 +3,20 @@ import os
 import sys
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lunchclub.settings")
+    env_file = os.path.join(os.path.dirname(__file__), 'env.txt')
+    if 'DJANGO_SETTINGS_MODULE' not in os.environ:
+        if os.path.exists(env_file):
+            with open(env_file) as fp:
+                for line in fp:
+                    k, v = line.split('=', 1)
+                    if v.startswith('"'):
+                        v = eval(v)
+                    else:
+                        v = v.strip('\n')
+                    os.environ.setdefault(k, v)
+        else:
+            os.environ.setdefault("DJANGO_SETTINGS_MODULE",
+                                  "lunchclub.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError:
