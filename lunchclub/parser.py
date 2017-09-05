@@ -113,12 +113,13 @@ def unparse_attenddb(attendance):
 
 
 def get_attenddb_from_model():
-    qs = models.Attendance.objects.all().select_related()
+    qs = models.Attendance.objects.all()
+    qs = qs.values_list(
+        'id', 'date', 'created_by__username', 'person__username')
     result = collections.OrderedDict()
-    for attend in qs:
-        a = Attend(attend.date.year, attend.date.month, attend.date.day,
-                   attend.created_by.username, attend.person.username)
-        result[a] = attend
+    for pk, date, created_by, person in qs:
+        a = Attend(date.year, date.month, date.day, created_by, person)
+        result[a] = pk
     return result
 
 
@@ -173,11 +174,11 @@ def unparse_expensedb(expenses):
 
 def get_expensedb_from_model():
     result = collections.OrderedDict()
-    qs = models.Expense.objects.all().select_related()
-    for expense in qs:
-        e = Expense(expense.date.year, expense.date.month, expense.date.day,
-                    expense.person.username, expense.amount)
-        result[e] = expense
+    qs = models.Expense.objects.all()
+    qs = qs.values_list('id', 'date', 'person__username', 'amount')
+    for pk, date, person, amount in qs:
+        e = Expense(date.year, date.month, date.day, person, amount)
+        result[e] = pk
     return result
 
 
@@ -292,10 +293,10 @@ def match_invalid_days(old, new):
     return new.keys() - old.keys(), old.keys() - new.keys()
 
 
-def dbdiff(old, new, has_creator):
+def dbdiff(old, new, model, has_creator):
     for o in old.values():
-        if o.pk is None:
-            raise ValueError("Old item has no PK!")
+        if not isinstance(o, int):
+            raise ValueError("Old item is not an integer!")
     for o in new.values():
         if o.pk is not None:
             raise ValueError("New item has a PK!")
@@ -318,14 +319,12 @@ def dbdiff(old, new, has_creator):
         person_save()
 
         if remove:
-            type_name = type(next(iter(remove))).__name__
-            logger.debug("Delete %s %s", len(remove), type_name)
-        for a in remove:
-            old[a].delete()
+            logger.debug("Delete %s %s", len(remove), model.__name__)
+        remove_pks = [old[a] for a in remove]
+        model.objects.filter(pk__in=remove_pks).delete()
 
         if create:
-            type_name = type(next(iter(create))).__name__
-            logger.debug("Save %s %s", len(create), type_name)
+            logger.debug("Save %s %s", len(create), model.__name__)
         for a in create:
             new[a].person = new[a].person  # Update person_id
             new[a].created_by = new[a].created_by  # Update created_by_id
@@ -335,8 +334,8 @@ def dbdiff(old, new, has_creator):
 
 
 def diff_attendance(old, new):
-    return dbdiff(old, new, has_creator=True)
+    return dbdiff(old, new, models.Attendance, has_creator=True)
 
 
 def diff_expense(old, new):
-    return dbdiff(old, new, has_creator=False)
+    return dbdiff(old, new, models.Expense, has_creator=False)

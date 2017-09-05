@@ -26,8 +26,8 @@ class DatabaseBulkEditForm(forms.Form):
         self.expensedb = kwargs.pop('expensedb')
         super().__init__(**kwargs)
         self.fields['initial'].initial = json.dumps({
-            'expense_pks': [o.pk for o in self.expensedb.values()],
-            'attendance_pks': [o.pk for o in self.attenddb.values()],
+            'expense_pks': list(self.expensedb.values()),
+            'attendance_pks': list(self.attenddb.values()),
         })
         self.fields['attendance'].initial = unparse_attenddb(self.attenddb)
         self.fields['expense'].initial = unparse_expensedb(self.expensedb)
