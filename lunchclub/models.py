@@ -196,21 +196,19 @@ class AccessToken(models.Model):
         return cls(person=person, token=token)
 
 
-def compute_meal_prices(expense_qs=None, attendance_qs=None):
+def compute_meal_prices(expense_qs, attendance_qs):
     '''Internal function used by compute_month_balances().'''
-    if expense_qs is None and attendance_qs is None:
-        expense_qs = Expense.objects.all()
-        attendance_qs = Attendance.objects.all()
-    # Count attendances using a set in order to remove duplicate
-    # (date,person)-pairs.
-    months = collections.defaultdict(lambda: ([], set()))
-    for o in expense_qs:
-        months[o.month][0].append(o)
-    for o in attendance_qs:
-        months[o.month][1].add((o.date, o.person_id))
-    return {month: float('inf') if not attendances else
-            sum(e.amount for e in expenses) / decimal.Decimal(len(attendances))
-            for month, (expenses, attendances) in months.items()}
+    # Assumes there are no duplicate (person_id,date)-pairs in attendances_qs
+    attendance_count = collections.Counter((date.year, date.month)
+                                           for date, person_id in attendance_qs)
+    months = collections.defaultdict(decimal.Decimal)
+    for date, person_id, amount in expense_qs:
+        months[date.year, date.month] += amount
+    meal_prices = {month: 0 for month in attendance_count.keys()}
+    for month, amount in months.items():
+        c = attendance_count.get(month)
+        meal_prices[month] = amount / decimal.Decimal(c) if c else float('inf')
+    return meal_prices
 
 
 def compute_month_balances(expense_qs=None, attendance_qs=None,
@@ -227,15 +225,19 @@ def compute_month_balances(expense_qs=None, attendance_qs=None,
     if expense_qs is None and attendance_qs is None:
         expense_qs = Expense.objects.all()
         attendance_qs = Attendance.objects.all()
+    expense_qs = list(expense_qs.values_list('date', 'person_id', 'amount'))
+    # Put into set() to remove duplicate (person_id,date)-pairs
+    attendance_qs = set(attendance_qs.values_list('date', 'person_id'))
     if meal_prices is None:
         meal_prices = compute_meal_prices(expense_qs, attendance_qs)
     balances = collections.defaultdict(
         lambda: collections.defaultdict(decimal.Decimal))
-    attendances = set((a.person_id, a.month, a.date) for a in attendance_qs)
-    for person_id, month, date in attendances:
+    attendances = ((person_id, (date.year, date.month))
+                   for date, person_id in attendance_qs)
+    for person_id, month in attendances:
         balances[person_id][month] -= meal_prices[month]
-    for e in expense_qs:
-        balances[e.person_id][e.month] += e.amount
+    for date, person_id, amount in expense_qs:
+        balances[person_id][date.year, date.month] += amount
     return meal_prices, balances
 
 
