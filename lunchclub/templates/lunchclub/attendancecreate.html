@@ -1,4 +1,29 @@
 {% extends "lunchclub/base.html" %}
+{% block head %}
+<style>
+/* TODO refactor these colors (also in home.html) */
+.person-yes {
+    background-color: #afa;
+}
+tr:nth-child(even) .person-yes {
+    background-color: #a6f9a6;
+}
+
+.person-own {
+    background-color: #ffa;
+}
+tr:nth-child(even) .person-own {
+    background-color: #f9f9a6;
+}
+
+.person-no {
+    background-color: #faa;
+}
+tr:nth-child(even) .person-no {
+    background-color: #f9a6a6;
+}
+</style>
+{% endblock %}
 {% block content %}
 <h1>Enter attendance</h1>
 <form method="get">
@@ -24,8 +49,8 @@
             {% for person, row in form.rows %}
             <tr>
                 <td>{{ person }}</td>
-                {% for already_checked, field in row %}
-                <td>
+                {% for already_checked, rsvp, field in row %}
+                <td class="person-{{ rsvp }}">
                     {% if already_checked %}
                     <input type=checkbox checked disabled />
                     {% else %}

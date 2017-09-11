@@ -421,6 +421,7 @@ class AttendanceCreateForm(forms.Form):
         self.person = kwargs.pop('person')
         self.persons = list(kwargs.pop('persons'))
         self.dates = kwargs.pop('dates')
+        self.rsvps = kwargs.pop('rsvps')
         super().__init__(**kwargs)
 
         existing_qs = Attendance.objects.filter(date__in=self.dates,
@@ -432,13 +433,14 @@ class AttendanceCreateForm(forms.Form):
         for person in self.persons:
             row = []
             for date in self.dates:
+                rsvp = self.rsvps.get((date, person.username))
                 if (person, date) in existing:
-                    row.append((True, ''))
+                    row.append((True, rsvp, ''))
                     continue
                 k = '%s_%s' % (person.username, date.strftime('%Y%m%d'))
                 self.fields[k] = forms.BooleanField(required=False)
                 self.checkboxes.append((person, date, k))
-                row.append((False, self[k]))
+                row.append((False, rsvp, self[k]))
             self.rows.append((person, row))
 
     def clean_lines(self):

@@ -356,11 +356,21 @@ class AttendanceCreate(FormView):
             dates.append(dt)
         return dates
 
+    def get_rsvps(self):
+        dates = self.get_dates()
+        qs = Rsvp.objects.filter(
+            date__gte=dates[0],
+            date__lt=dates[-1] + datetime.timedelta(1))
+        qs = qs.values_list('date', 'person__username', 'status')
+        return {(date, username): status
+                for date, username, status in qs}
+
     def get_form_kwargs(self, **kwargs):
         form_kwargs = super().get_form_kwargs(**kwargs)
         form_kwargs['person'] = self.request.person
         form_kwargs['dates'] = self.get_dates()
         form_kwargs['persons'] = Person.last_attendance_order()
+        form_kwargs['rsvps'] = self.get_rsvps()
         return form_kwargs
 
     def form_valid(self, form):
