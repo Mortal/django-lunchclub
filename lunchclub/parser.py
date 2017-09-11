@@ -206,6 +206,7 @@ def get_or_create_users(usernames):
         new_persons = []
         for p in username_map.values():
             if p.pk is None:
+                p.clean()
                 new_persons.append(p)
 
         if new_persons:
