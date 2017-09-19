@@ -7,7 +7,7 @@ import collections
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Sum, Q, Max
+from django.db.models import Sum, Q, Max, F
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -179,12 +179,13 @@ class AccessToken(models.Model):
     @classmethod
     def all_as_dict(self):
         token_qs = AccessToken.objects.all()
+        token_qs = token_qs.annotate(username=F('person__username'))
         tokens = {}
         for t in token_qs:
-            ex = tokens.setdefault(t.person, t)
+            ex = tokens.setdefault(t.username, t)
             if ex.created_time < t.created_time:
                 # Retain token with latest created_time
-                tokens[t.person] = t
+                tokens[t.username] = t
         return tokens
 
     @classmethod

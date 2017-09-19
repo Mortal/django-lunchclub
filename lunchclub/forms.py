@@ -157,6 +157,7 @@ class AccessTokenListForm(forms.Form):
             for token in self.revoke_tokens:
                 token.delete()
             for token in self.save_tokens:
+                token.person = token.person  # Update token_id
                 token.save()
 
     def __init__(self, **kwargs):
@@ -181,7 +182,7 @@ class AccessTokenListForm(forms.Form):
             self.fields[base + 'generate'] = forms.BooleanField(required=False)
             self.fields[base + 'send'] = forms.BooleanField(required=False)
 
-            token = (person.pk and self.tokens.get(person)) or AccessToken()
+            token = self.tokens.get(person.username) or AccessToken()
 
             if person.pk:
                 person_cell = person.username
@@ -205,7 +206,7 @@ class AccessTokenListForm(forms.Form):
     def clean(self):
         data = self.cleaned_data
         for person in self.persons:
-            token = (person.pk and self.tokens.get(person)) or AccessToken()
+            token = self.tokens.get(person.username) or AccessToken()
             base = 'p_%s_' % person.username
             if person.pk is None:
                 # This is the row for creating a new person
@@ -279,13 +280,13 @@ class AccessTokenListForm(forms.Form):
             if email_changed:
                 set_email.append((person, data[base + 'email']))
             if data[base + 'revoke']:
-                revoke_tokens.append(self.tokens.pop(person))
+                revoke_tokens.append(self.tokens.pop(person.username))
             if data[base + 'generate']:
                 token = AccessToken.fresh(person)
                 save_tokens.append(token)
-                self.tokens[person] = token
+                self.tokens[person.username] = token
             if data[base + 'send']:
-                link = self.tokens[person].login_url()
+                link = self.tokens[person.username].login_url()
                 recipient = data[base + 'email']
                 assert recipient
                 assert person.username
