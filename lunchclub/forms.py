@@ -352,14 +352,17 @@ class ExpenseCreateForm(forms.Form):
 
 
 class AttendanceTodayForm(forms.Form):
+    date = forms.DateField(widget=forms.HiddenInput)
+
     def __init__(self, **kwargs):
         self.person = kwargs.pop('person')
         queryset = kwargs.pop('queryset')
-        self.date = kwargs.pop('date')
+        date = kwargs.pop('date')
+        kwargs.setdefault('initial', {})['date'] = date
         super().__init__(**kwargs)
 
         existing = {a.person: a
-                    for a in Attendance.objects.filter(date=self.date)}
+                    for a in Attendance.objects.filter(date=date)}
 
         self.rows = []
         self.persons = []
@@ -367,7 +370,7 @@ class AttendanceTodayForm(forms.Form):
             if person in existing:
                 self.rows.append((person, True, ''))
                 continue
-            k = person.username
+            k = 'person_%s' % person.username
             self.fields[k] = forms.BooleanField(required=False)
             self.rows.append((person, False, self[k]))
             self.persons.append((person, k))
@@ -376,8 +379,9 @@ class AttendanceTodayForm(forms.Form):
         return [p for p, k in self.persons if self.cleaned_data[k]]
 
     def save(self):
+        date = self.cleaned_data['date']
         objects = [
-            Attendance(date=self.date,
+            Attendance(date=date,
                        person=p,
                        created_by=self.person)
             for p in self.get_selected()
