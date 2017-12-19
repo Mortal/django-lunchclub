@@ -360,6 +360,12 @@ class AttendanceTodayForm(forms.Form):
         date = kwargs.pop('date')
         kwargs.setdefault('initial', {})['date'] = date
         super().__init__(**kwargs)
+        try:
+            data_date = self.fields['date'].to_python(kwargs['data']['date'])
+            if data_date:
+                date = data_date
+        except (KeyError, forms.ValidationError):
+            pass
 
         existing = {a.person: a
                     for a in Attendance.objects.filter(date=date)}
