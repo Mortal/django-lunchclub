@@ -123,7 +123,7 @@ class SearchForm(forms.Form):
 class AccessTokenListForm(forms.Form):
     ChangesBase = collections.namedtuple(
         'Changes',
-        'save_person set_name set_email revoke_tokens save_tokens')
+        'save_person set_name set_email revoke_tokens save_tokens set_hidden')
 
     default_email_domain = 'cs.au.dk'
 
@@ -143,6 +143,8 @@ class AccessTokenListForm(forms.Form):
                 yield ("Create %s token %s",
                        token.person.username,
                        token.token[:20])
+            for person, b in self.set_hidden:
+                yield ('%s %s', 'Hide' if b else 'Unhide', person.username)
 
         def save(self):
             for person in self.save_person:
@@ -159,6 +161,9 @@ class AccessTokenListForm(forms.Form):
             for token in self.save_tokens:
                 token.person = token.person  # Update token_id
                 token.save()
+            for person, b in self.set_hidden:
+                person.hidden = b
+                person.save()
 
     def __init__(self, **kwargs):
         queryset = kwargs.pop('queryset')
@@ -181,6 +186,8 @@ class AccessTokenListForm(forms.Form):
             self.fields[base + 'revoke'] = forms.BooleanField(required=False)
             self.fields[base + 'generate'] = forms.BooleanField(required=False)
             self.fields[base + 'send'] = forms.BooleanField(required=False)
+            self.fields[base + 'hidden'] = forms.BooleanField(
+                initial=person.hidden, required=False)
 
             token = self.tokens.get(person.username) or AccessToken()
 
@@ -201,6 +208,7 @@ class AccessTokenListForm(forms.Form):
                 self[base + 'revoke'],
                 self[base + 'generate'],
                 self[base + 'send'],
+                self[base + 'hidden'],
             ))
 
     def clean(self):
@@ -217,6 +225,7 @@ class AccessTokenListForm(forms.Form):
                     data[base + 'revoke'],
                     data[base + 'generate'],
                     data[base + 'send'],
+                    data[base + 'hidden'],
                 ])
                 if not any_data:
                     continue
@@ -259,6 +268,7 @@ class AccessTokenListForm(forms.Form):
         set_email = []
         revoke_tokens = []
         save_tokens = []
+        set_hidden = []
         messages = []
         recipients = []
 
@@ -297,9 +307,11 @@ class AccessTokenListForm(forms.Form):
                     email=recipient,
                     link=link,
                 ))
+            if data[base + 'hidden'] != person.hidden:
+                set_hidden.append((person, data[base + 'hidden']))
 
         return self.Changes(save_person, set_name, set_email,
-                            revoke_tokens, save_tokens), messages
+                            revoke_tokens, save_tokens, set_hidden), messages
 
 
 class ExpenseCreateForm(forms.Form):

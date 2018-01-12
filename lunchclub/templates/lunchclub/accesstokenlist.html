@@ -41,13 +41,14 @@ a default of <tt>@{{ form.default_email_domain }}</tt> will be assumed.</p>
     <th>Display name</th>
     <th>Login URL</th>
     <th>Email</th>
-    <th>Revoke login</th>
-    <th>Generate new login</th>
-    <th>Send login email</th>
+    <th>Revoke</th>
+    <th>Generate</th>
+    <th>Send</th>
+    <th>Hide</th>
 </tr>
 </thead>
 <tbody>
-{% for person, name, login_url, email, revoke, generate, send in form.rows %}
+{% for person, name, login_url, email, revoke, generate, send, hidden in form.rows %}
 <tr>
     <th>{{ person }}</th>
     <th>{{ name }}</th>
@@ -56,6 +57,7 @@ a default of <tt>@{{ form.default_email_domain }}</tt> will be assumed.</p>
     <td>{{ revoke }}</td>
     <td>{{ generate }}</td>
     <td>{{ send }}</td>
+    <td>{{ hidden }}</td>
 </tr>
 {% endfor %}
 </tbody>

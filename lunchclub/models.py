@@ -27,6 +27,7 @@ class Person(models.Model):
     display_name = models.CharField(max_length=100)
     balance = AmountField()
     created_time = models.DateTimeField(auto_now_add=True)
+    hide_after = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.display_name
@@ -80,11 +81,27 @@ class Person(models.Model):
         qs = qs.filter(
             Q(last_expense__gte=earliest_date) |
             Q(last_attendance__gte=earliest_date))
+        qs = qs.filter(
+            Q(hide_after__isnull=True) |
+            Q(last_expense__gte=F('hide_after')) |
+            Q(last_attendance__gte=F('hide_after')))
         return qs
 
     def clean(self):
         if not self.display_name:
             self.display_name = self.username
+
+    @property
+    def hidden(self):
+        return bool(self.hide_after)
+
+    @hidden.setter
+    def hidden(self, v):
+        hidden = self.hidden
+        if v and not hidden:
+            self.hide_after = timezone.now()
+        elif not v and hidden:
+            self.hide_after = None
 
 
 class Attendance(models.Model):
