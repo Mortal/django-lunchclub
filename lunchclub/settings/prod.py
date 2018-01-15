@@ -67,3 +67,6 @@ CHANNEL_LAYERS = {
         "ROUTING": "lunchclub.routing.channel_routing",
     },
 }
+
+CSRF_COOKIE_PATH = SESSION_COOKIE_PATH = '/lunchclub/'
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE = True

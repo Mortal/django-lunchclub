@@ -214,6 +214,12 @@ class Login(TemplateView):
         self.kwargs['token'] = kwargs['token'] = token
         return super(Login, self).dispatch(request, *args, **kwargs)
 
+    def get(self, request, user, token):
+        response = super(Login, self).get(request, user=user, token=token)
+        # Delete sessionid on path='/' since we changed this to '/lunchclub/'
+        response.delete_cookie('sessionid')
+        return response
+
     def get_context_data(self, **kwargs):
         data = super(Login, self).get_context_data(**kwargs)
         data['user'] = self.kwargs['user']
