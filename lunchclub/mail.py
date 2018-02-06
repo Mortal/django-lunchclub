@@ -22,7 +22,7 @@ def make_mailto_links(messages):
     return [make_mailto_link(message) for message in messages]
 
 
-def prepare_login_message(name, email, link):
+def prepare_login_message(username, display_name, email, link):
     text = textwrap.dedent('''
     Hi {name}
 
@@ -37,10 +37,10 @@ def prepare_login_message(name, email, link):
 
     Best regards,
     Your friendly lunchclub robot.
-    '''.strip('\n')).format(name=name, link=link)
+    '''.strip('\n')).format(name=display_name, link=link)
 
     return EmailMessage(
-        subject='Link to lunchclub login for {}'.format(name),
+        subject='Link to lunchclub login for {}'.format(display_name),
         body=text,
         to=[email],
     )

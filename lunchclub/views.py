@@ -237,7 +237,7 @@ class AccessTokenList(FormView):
         form_kwargs['queryset'] = Person.objects.all()
         return form_kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: AccessTokenListForm):
         changes, messages = form.actions()
         for s, *args in changes.log_entries():
             logger.info("%s: " + s, self.request.user.username, *args)

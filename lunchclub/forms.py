@@ -303,7 +303,8 @@ class AccessTokenListForm(forms.Form):
                 assert link
                 recipients.append(recipient)
                 messages.append(lunchclub.mail.prepare_login_message(
-                    name=person.username,
+                    username=person.username,
+                    display_name=person.display_name,
                     email=recipient,
                     link=link,
                 ))
