@@ -9,15 +9,15 @@ or
 in the Official Lunchclub Interchange Format (OLIF).</p>
 
 <p>Attendance:</p>
-<div style="height: 150px; width: auto; overflow: auto">
-<table>{% for a in attenddb reversed %}
+<div style="width: 250px; height: 150px; width: auto; overflow: auto; resize: both">
+<table style="width: 100%">{% for a in attenddb reversed %}
 <tr><td>{{ a.ymd }}<td>{{ a.creator }}<td>{{ a.uname }}{% endfor %}
 </table>
 </div>
 
 <p>Expenses:</p>
-<div style="height: 150px; overflow: auto">
-<table>{% for a in expensedb reversed %}
+<div style="width: 250px; height: 150px; width: auto; overflow: auto; resize: both">
+<table style="width: 100%">{% for a in expensedb reversed %}
 <tr><td>{{ a.ymd }}<td>{{ a.amount }}<td>{{ a.uname }}{% endfor %}
 </table>
 </div>
