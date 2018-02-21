@@ -26,6 +26,9 @@ class YearMonthDay(namedtuple('YearMonthDay', 'year month day')):
     def ymd(self):
         return self
 
+    def __str__(self):
+        return '%04d-%02d-%02d' % tuple(self)
+
 
 class DateMixin:
     @property

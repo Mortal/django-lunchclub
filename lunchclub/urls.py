@@ -24,12 +24,14 @@ from lunchclub.views import (
     AttendanceExport, ExpenseExport, submit_view,
     ShoppingList, chat_publish,
     today_update,
+    DatabaseView,
 )
 from roomcalendar.views import CalendarUpdate
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', Home.as_view(), name='home'),
+    url(r'^view/$', DatabaseView.as_view(), name='database_view'),
     url(r'^edit/$', DatabaseBulkEdit.as_view(), name='edit'),
     url(r'^export/attenddb\.txt$', AttendanceExport.as_view(), name='attendance_export'),
     url(r'^export/expensedb\.txt$', ExpenseExport.as_view(), name='expense_export'),

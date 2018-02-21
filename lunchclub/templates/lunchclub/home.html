@@ -244,7 +244,7 @@ today_events.addEventListener('notification', function (e) {
 
 <ul class="nav-group">
 <li><a href="{% url 'expense_create' %}">Enter someone else's expense</a></li>
-<li><a href="{% url 'edit' %}">View database</a></li>
+<li><a href="{% url 'database_view' %}">View database</a></li>
 </ul>
 
 <form class="expense-form" method="post" action="{% url 'expense_create' %}">{% csrf_token %}

@@ -150,6 +150,16 @@ class ExpenseExport(View):
             content_type='text/plain')
 
 
+class DatabaseView(TemplateView):
+    template_name = 'lunchclub/database_view.html'
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data['attenddb'] = get_attenddb_from_model()
+        context_data['expensedb'] = get_expensedb_from_model()
+        return context_data
+
+
 class DatabaseBulkEdit(FormView):
     form_class = DatabaseBulkEditForm
     template_name = 'lunchclub/database_bulk_edit.html'
