@@ -11,7 +11,7 @@ in the Official Lunchclub Interchange Format (OLIF).</p>
 <p>Attendance:</p>
 <div style="width: 250px; height: 150px; overflow: auto; resize: both">
 <table style="width: 100%">{% for a in attenddb reversed %}
-<tr><td>{{ a.ymd }}<td>{{ a.creator }}<td>{{ a.uname }}{% endfor %}
+{% ifchanged %}<tr><td>{{ a.ymd }}<td>{{ a.creator }}<td>{% else %}<br>{% endifchanged %}{{ a.uname }}{% endfor %}
 </table>
 </div>
 
