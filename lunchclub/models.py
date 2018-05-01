@@ -73,9 +73,9 @@ class Person(models.Model):
         if today is None:
             today = timezone.now().date()
         ym = 12*today.year + today.month
-        earliest_ym = ym - inactive_months + 1
+        earliest_ym = ym - inactive_months
         earliest_y, earliest_m = divmod(earliest_ym, 12)
-        earliest_date = datetime.date(earliest_y, earliest_m, 1)
+        earliest_date = datetime.date(earliest_y, earliest_m + 1, 1)
 
         qs = cls.annotate_active()
         qs = qs.filter(
