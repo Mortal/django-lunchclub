@@ -133,7 +133,7 @@ class Attendance(models.Model):
         return (self.date.year, self.date.month)
 
     class Meta:
-        ordering = ['date', 'person']
+        ordering = ['date', 'person', 'created_by']
 
 
 class Expense(models.Model):
@@ -167,7 +167,7 @@ class Expense(models.Model):
         return (self.date.year, self.date.month)
 
     class Meta:
-        ordering = ['date', 'person']
+        ordering = ['date', 'person', 'amount']
 
 
 class AccessToken(models.Model):
