@@ -4,9 +4,6 @@ import datetime
 import subprocess
 
 from exchangelib import DELEGATE, Account, Credentials
-from exchangelib.errors import ErrorNameResolutionMultipleResults
-from exchangelib.services import ResolveNames
-from exchangelib.transport import TNS
 from exchangelib.ewsdatetime import EWSDateTime, EWSTimeZone
 
 
@@ -53,18 +50,14 @@ class ExchangeCalendar:
             return self._cached_calendar_email_address
         except AttributeError:
             pass
-        r = ResolveNames(protocol=self.ews_account.protocol)
-        r.account = self.ews_account
-        try:
-            result, = list(r.call([self.calendar_name]))
-        except ErrorNameResolutionMultipleResults:
+        names = [self.calendar_name]
+        mailboxes = list(self.ews_account.protocol.resolve_names(names))
+        if len(mailboxes) > 1:
             raise ValueError("Got multiple results for %r" %
                              self.calendar_name)
-        mbox = result.find('{%s}Mailbox' % TNS)
-        # name = mbox.find('{%s}Name' % TNS).text
-        email = mbox.find('{%s}EmailAddress' % TNS).text
-        self._cached_calendar_email_address = email
-        return email
+        mbox = mailboxes[0]
+        self._cached_calendar_email_address = mbox.email_address
+        return self._cached_calendar_email_address
 
     @property
     def ews_calendar(self):

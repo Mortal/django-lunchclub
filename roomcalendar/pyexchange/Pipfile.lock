@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ab7e0399b661df979b82da8b780fb55a0b4be0a01f7ef8e873e2ddda65590b72"
+            "sha256": "293a69f253c9f04c6a81ef4857adce13b5b2f51b52cb5baad20de74d27f21ca5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -103,7 +103,15 @@
                 "sha256:cee18beb4c807b5c0b178f4fa2fae03cef9d51821a358c6890f8b23465b7e5d2",
                 "sha256:d01dfc5c2b3495184f683574e03c70022674ca9a7be88589c5aba130d835ea90"
             ],
+            "markers": "python_version != '3.3'",
             "version": "==2.3"
+        },
+        "defusedxml": {
+            "hashes": [
+                "sha256:24d7f2f94f7f3cb6061acb215685e5125fbcdc40a857eff9de22518820b0a4f4",
+                "sha256:702a91ade2968a82beb0db1e0766a6a273f33d4616a6ce8cde475d8e09853b20"
+            ],
+            "version": "==0.5.0"
         },
         "dnspython": {
             "hashes": [
@@ -114,10 +122,11 @@
         },
         "exchangelib": {
             "hashes": [
-                "sha256:c77f2b1942f17a21f76eb1a06b779ecae12a7cbb68aebba9a92219b540e9e3c8"
+                "sha256:11f3fee5b0aa0b4f423d44091664a5ec15ef00173df2f6e94ed03cf3e6ec8665",
+                "sha256:9fb543ec28e21099a4159e74b1daf5c7e84ac3d4f0413d68711ebbb126e56aa0"
             ],
             "index": "pypi",
-            "version": "==1.9.6"
+            "version": "==1.11.4"
         },
         "future": {
             "hashes": [
@@ -131,6 +140,13 @@
                 "sha256:684a38a6f903c1d71d6d5fac066b58d7768af4de2b832e426ec79c30daa94a16"
             ],
             "version": "==2.7"
+        },
+        "isodate": {
+            "hashes": [
+                "sha256:2e364a3d5759479cdb2d37cce6b9376ea504db2ff90252a2e5b7cc89cc9ff2d8",
+                "sha256:aa4d33c06640f5352aca96e4b81afd8ab3b47337cc12089822d6f322ac772c81"
+            ],
+            "version": "==0.6.0"
         },
         "lxml": {
             "hashes": [
@@ -180,6 +196,20 @@
             ],
             "version": "==2.18"
         },
+        "pygments": {
+            "hashes": [
+                "sha256:78f3f434bcc5d6ee09020f92ba487f95ba50f1e3ef83ae96b9d5ffa1bab25c5d",
+                "sha256:dbae1046def0efb574852fab9e90209b23f556367b5a320c0bcb871c77c3e8cc"
+            ],
+            "version": "==2.2.0"
+        },
+        "pykerberos": {
+            "hashes": [
+                "sha256:4f2dca8df5f84a3be039c026893850d731a8bb38395292e1610ffb0a08ba876c"
+            ],
+            "markers": "sys_platform != 'win32'",
+            "version": "==1.2.1"
+        },
         "python-dateutil": {
             "hashes": [
                 "sha256:1adb80e7a782c12e52ef9a8182bebeb73f1d7e24e374397af06fb4956c8dc5c0",
@@ -200,6 +230,13 @@
                 "sha256:ec22d826a36ed72a7358ff3fe56cbd4ba69dd7a6718ffd450ff0e9df7a47ce6a"
             ],
             "version": "==2.19.1"
+        },
+        "requests-kerberos": {
+            "hashes": [
+                "sha256:5733abc0b6524815f6fc72d5c0ec9f3fb89137b852adea2a461c45931f5675e0",
+                "sha256:9d21f15241c53c2ad47e813138b9aee4b9acdd04b82048c4388ade15f40a52fd"
+            ],
+            "version": "==0.12.0"
         },
         "requests-ntlm": {
             "hashes": [
