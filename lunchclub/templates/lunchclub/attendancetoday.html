@@ -2,6 +2,7 @@
 {% block content %}
 <h1>Enter today's attendance</h1>
 <form method="post">{% csrf_token %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 <ul>
 {% for person, already_checked, field in form.rows %}
     <li>
